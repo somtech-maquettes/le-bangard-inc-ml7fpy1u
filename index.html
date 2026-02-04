@@ -2575,6 +2575,10 @@
         const [selectedClientId, setSelectedClientId] = React.useState(null);
         const [showCreateFacture, setShowCreateFacture] = React.useState(false);
         const [selectedFacture, setSelectedFacture] = React.useState(null);
+        const [showQBModal, setShowQBModal] = React.useState(false);
+        const [qbModalFacture, setQbModalFacture] = React.useState(null);
+        const [showQBToast, setShowQBToast] = React.useState(false);
+        const [qbToastMessage, setQbToastMessage] = React.useState('');
         const [factures, setFactures] = React.useState([
           {
             id: 1,
@@ -2587,7 +2591,8 @@
             montantTotal: 3678.40,
             statut: "Payée",
             commandes: ["CMD-2024-003"],
-            paiements: [{ date: "2024-02-15", montant: 3678.40, methode: "Virement" }]
+            paiements: [{ date: "2024-02-15", montant: 3678.40, methode: "Virement" }],
+            qbSync: 'synced' // 'synced', 'pending', null
           },
           {
             id: 2,
@@ -2600,7 +2605,8 @@
             montantTotal: 2816.38,
             statut: "En attente",
             commandes: ["CMD-2024-001"],
-            paiements: []
+            paiements: [],
+            qbSync: 'pending'
           },
           {
             id: 3,
@@ -2613,7 +2619,8 @@
             montantTotal: 6437.20,
             statut: "En retard",
             commandes: ["CMD-2024-004"],
-            paiements: []
+            paiements: [],
+            qbSync: null
           },
           {
             id: 4,
@@ -2626,9 +2633,65 @@
             montantTotal: 2172.56,
             statut: "Envoyée",
             commandes: ["CMD-2024-002"],
-            paiements: []
+            paiements: [],
+            qbSync: 'synced'
           }
         ]);
+
+        // Fonctions QuickBooks
+        const showToast = (message) => {
+          setQbToastMessage(message);
+          setShowQBToast(true);
+          setTimeout(() => setShowQBToast(false), 3000);
+        };
+
+        const syncAllQB = () => {
+          showToast('Synchronisation avec QuickBooks en cours...');
+          setTimeout(() => {
+            setFactures(prev => prev.map(f => ({ ...f, qbSync: 'synced' })));
+            showToast('Synchronisation QuickBooks terminée');
+          }, 1500);
+        };
+
+        const sendToQB = (factureId) => {
+          setFactures(prev => prev.map(f =>
+            f.id === factureId ? { ...f, qbSync: 'synced' } : f
+          ));
+          setShowQBModal(false);
+          showToast('Facture envoyée vers QuickBooks');
+        };
+
+        const openQBModal = (facture) => {
+          setQbModalFacture(facture);
+          setShowQBModal(true);
+        };
+
+        // Badge QuickBooks
+        const QBBadge = ({ status }) => {
+          if (status === 'synced') {
+            return (
+              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 border border-green-200">
+                QB ✓
+              </span>
+            );
+          }
+          if (status === 'pending') {
+            return (
+              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800 border border-yellow-200">
+                QB ⏳
+              </span>
+            );
+          }
+          return null;
+        };
+
+        // Icône Sync QB
+        const SyncIcon = ({ className = "w-4 h-4" }) => (
+          <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+        );
 
         const getClientName = (clientId) => {
           const client = mockData.clients.find(c => c.id === clientId);
@@ -2682,6 +2745,14 @@
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
                     Télécharger PDF
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    onClick={() => openQBModal(facture)}
+                    className="bg-green-100 hover:bg-green-200 text-green-800 border border-green-300"
+                  >
+                    <SyncIcon className="w-4 h-4 mr-2" />
+                    Envoyer vers QuickBooks
                   </Button>
                   <Button>Envoyer par courriel</Button>
                 </div>
@@ -2873,9 +2944,19 @@
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <h1 className="text-2xl font-display font-bold text-gray-800">Facturation</h1>
-              <Button onClick={() => setShowCreateFacture(true)}>
-                Nouvelle facture
-              </Button>
+              <div className="flex gap-3">
+                <Button
+                  variant="secondary"
+                  onClick={syncAllQB}
+                  className="bg-green-100 hover:bg-green-200 text-green-800 border border-green-300"
+                >
+                  <SyncIcon className="w-4 h-4 mr-2" />
+                  Sync QuickBooks
+                </Button>
+                <Button onClick={() => setShowCreateFacture(true)}>
+                  Nouvelle facture
+                </Button>
+              </div>
             </div>
 
             {/* Cartes de résumé */}
@@ -2965,6 +3046,7 @@
                       <th className="px-6 py-4 text-left text-sm font-medium text-gray-600">Échéance</th>
                       <th className="px-6 py-4 text-right text-sm font-medium text-gray-600">Montant</th>
                       <th className="px-6 py-4 text-center text-sm font-medium text-gray-600">Statut</th>
+                      <th className="px-6 py-4 text-center text-sm font-medium text-gray-600">QB</th>
                       <th className="px-6 py-4 text-center text-sm font-medium text-gray-600">Actions</th>
                     </tr>
                   </thead>
@@ -2984,21 +3066,34 @@
                           </span>
                         </td>
                         <td className="px-6 py-4 text-center">
+                          <QBBadge status={facture.qbSync} />
+                        </td>
+                        <td className="px-6 py-4 text-center">
                           <div className="flex items-center justify-center gap-2">
                             <button
                               onClick={() => setSelectedFacture(facture.id)}
                               className="text-gray-600 hover:text-gray-800 transition-colors"
+                              title="Voir les détails"
                             >
                               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                               </svg>
                             </button>
-                            <button className="text-gray-600 hover:text-gray-800 transition-colors">
+                            <button className="text-gray-600 hover:text-gray-800 transition-colors" title="Télécharger PDF">
                               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                               </svg>
                             </button>
+                            {facture.qbSync !== 'synced' && (
+                              <button
+                                onClick={() => openQBModal(facture)}
+                                className="text-green-600 hover:text-green-800 transition-colors"
+                                title="Envoyer vers QuickBooks"
+                              >
+                                <SyncIcon className="w-5 h-5" />
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -3007,6 +3102,64 @@
                 </table>
               </div>
             </Card>
+
+            {/* Modal QuickBooks */}
+            {showQBModal && qbModalFacture && (
+              <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                <Card className="w-full max-w-md animate-scale-in">
+                  <div className="p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                        <SyncIcon className="w-6 h-6 text-green-600" />
+                      </div>
+                      <h3 className="text-lg font-display font-semibold text-gray-800">
+                        Envoyer vers QuickBooks
+                      </h3>
+                    </div>
+                    <p className="text-gray-600 mb-4">
+                      Cette facture sera créée dans QuickBooks avec les informations suivantes :
+                    </p>
+                    <div className="bg-gray-50 rounded-lg p-4 mb-6 space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Numéro</span>
+                        <span className="font-medium text-gray-800">{qbModalFacture.numero}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Client</span>
+                        <span className="font-medium text-gray-800">{getClientName(qbModalFacture.clientId)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Montant</span>
+                        <span className="font-medium text-gray-800">{qbModalFacture.montantTotal.toFixed(2)} $</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Date</span>
+                        <span className="font-medium text-gray-800">{qbModalFacture.date}</span>
+                      </div>
+                    </div>
+                    <div className="flex gap-3 justify-end">
+                      <Button variant="secondary" onClick={() => setShowQBModal(false)}>
+                        Annuler
+                      </Button>
+                      <Button
+                        onClick={() => sendToQB(qbModalFacture.id)}
+                        className="bg-green-600 hover:bg-green-700 text-white"
+                      >
+                        Confirmer l'envoi
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+              </div>
+            )}
+
+            {/* Toast QuickBooks */}
+            {showQBToast && (
+              <div className="fixed bottom-4 right-4 bg-green-600 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 animate-fade-in z-50">
+                <SyncIcon className="w-5 h-5" />
+                {qbToastMessage}
+              </div>
+            )}
           </div>
         );
       };
@@ -3018,6 +3171,37 @@
         const [showReception, setShowReception] = React.useState(false);
         const [selectedArticle, setSelectedArticle] = React.useState(null);
         const [activeSubTab, setActiveSubTab] = React.useState('articles');
+        const [showQBSyncModal, setShowQBSyncModal] = React.useState(false);
+        const [showQBToast, setShowQBToast] = React.useState(false);
+        const [qbToastMessage, setQbToastMessage] = React.useState('');
+
+        // Fonctions QuickBooks
+        const showToast = (message) => {
+          setQbToastMessage(message);
+          setShowQBToast(true);
+          setTimeout(() => setShowQBToast(false), 3000);
+        };
+
+        const openQBSyncModal = () => {
+          setShowQBSyncModal(true);
+        };
+
+        const confirmQBSync = () => {
+          setShowQBSyncModal(false);
+          showToast('Synchronisation avec QuickBooks en cours...');
+          setTimeout(() => {
+            showToast('Inventaire synchronisé avec QuickBooks');
+          }, 1500);
+        };
+
+        // Icône Sync QB
+        const QBSyncIcon = ({ className = "w-4 h-4" }) => (
+          <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+        );
+
         const [mouvements, setMouvements] = React.useState([
           {
             id: 1,
@@ -3464,6 +3648,14 @@
             <div className="flex items-center justify-between">
               <h1 className="text-2xl font-display font-bold text-gray-800">Gestion de l'inventaire</h1>
               <div className="flex gap-3">
+                <Button
+                  variant="secondary"
+                  onClick={openQBSyncModal}
+                  className="bg-green-100 hover:bg-green-200 text-green-800 border border-green-300"
+                >
+                  <QBSyncIcon className="w-4 h-4 mr-2" />
+                  Sync QuickBooks
+                </Button>
                 <Button variant="secondary" onClick={() => setShowReception(true)}>
                   <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
@@ -3727,6 +3919,60 @@
             {/* Modals */}
             {showAddArticle && <AddArticleModal />}
             {showReception && <ReceptionModal />}
+
+            {/* Modal QuickBooks Sync */}
+            {showQBSyncModal && (
+              <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                <Card className="w-full max-w-md animate-scale-in">
+                  <div className="p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                        <QBSyncIcon className="w-6 h-6 text-green-600" />
+                      </div>
+                      <h3 className="text-lg font-display font-semibold text-gray-800">
+                        Synchroniser avec QuickBooks
+                      </h3>
+                    </div>
+                    <p className="text-gray-600 mb-4">
+                      Cette action synchronisera votre inventaire avec QuickBooks :
+                    </p>
+                    <div className="bg-gray-50 rounded-lg p-4 mb-6 space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Articles en stock</span>
+                        <span className="font-medium text-gray-800">{articles.length}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Articles à synchroniser</span>
+                        <span className="font-medium text-green-600">{articles.length}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Valeur totale</span>
+                        <span className="font-medium text-gray-800">{valeurtotale.toFixed(0)} $</span>
+                      </div>
+                    </div>
+                    <div className="flex gap-3 justify-end">
+                      <Button variant="secondary" onClick={() => setShowQBSyncModal(false)}>
+                        Annuler
+                      </Button>
+                      <Button
+                        onClick={confirmQBSync}
+                        className="bg-green-600 hover:bg-green-700 text-white"
+                      >
+                        Synchroniser
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+              </div>
+            )}
+
+            {/* Toast QuickBooks */}
+            {showQBToast && (
+              <div className="fixed bottom-4 right-4 bg-green-600 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 animate-fade-in z-50">
+                <QBSyncIcon className="w-5 h-5" />
+                {qbToastMessage}
+              </div>
+            )}
           </div>
         );
       };
@@ -3798,6 +4044,36 @@
         const [searchTerm, setSearchTerm] = React.useState('');
         const [showVersionHistory, setShowVersionHistory] = React.useState(false);
         const [editMode, setEditMode] = React.useState(false);
+        const [showQBToast, setShowQBToast] = React.useState(false);
+        const [qbToastMessage, setQbToastMessage] = React.useState('');
+        const [showQBModal, setShowQBModal] = React.useState(false);
+        const [qbModalSoumission, setQbModalSoumission] = React.useState(null);
+
+        // Fonctions QuickBooks
+        const showToast = (message) => {
+          setQbToastMessage(message);
+          setShowQBToast(true);
+          setTimeout(() => setShowQBToast(false), 3000);
+        };
+
+        const createQBQuote = (soumission) => {
+          setQbModalSoumission(soumission);
+          setShowQBModal(true);
+        };
+
+        const confirmQBQuote = () => {
+          const qbNumber = `QBQ-${Date.now().toString().slice(-6)}`;
+          setShowQBModal(false);
+          showToast(`Devis ${qbNumber} créé dans QuickBooks`);
+        };
+
+        // Icône Sync QB
+        const QBSyncIcon = ({ className = "w-4 h-4" }) => (
+          <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+        );
 
         // Filtrer les soumissions
         const filteredSoumissions = soumissions.filter(s => {
@@ -4196,6 +4472,14 @@
                     </svg>
                     Envoyer par email
                   </Button>
+                  <Button
+                    variant="secondary"
+                    onClick={() => createQBQuote(soumission)}
+                    className="bg-green-100 hover:bg-green-200 text-green-800 border border-green-300"
+                  >
+                    <QBSyncIcon className="w-5 h-5 mr-2" />
+                    Créer devis QuickBooks
+                  </Button>
                   {soumission.statut === 'Acceptée' && (
                     <Button
                       className="bg-green-600 hover:bg-green-700 text-white"
@@ -4335,6 +4619,13 @@
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                         </svg>
                         <span className="text-gray-900">Dupliquer</span>
+                      </button>
+                      <button
+                        onClick={() => createQBQuote(soumission)}
+                        className="w-full text-left px-4 py-3 rounded-lg bg-green-50 hover:bg-green-100 transition-colors flex items-center gap-3 border border-green-200"
+                      >
+                        <QBSyncIcon className="w-5 h-5 text-green-600" />
+                        <span className="text-green-800">Exporter vers QuickBooks</span>
                       </button>
                     </div>
                   </Card>
@@ -4623,6 +4914,64 @@
                   setSelectedSoumission(null);
                 }}
               />
+            )}
+
+            {/* Modal QuickBooks */}
+            {showQBModal && qbModalSoumission && (
+              <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                <Card className="w-full max-w-md animate-scale-in">
+                  <div className="p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                        <QBSyncIcon className="w-6 h-6 text-green-600" />
+                      </div>
+                      <h3 className="text-lg font-display font-semibold text-gray-800">
+                        Créer devis QuickBooks
+                      </h3>
+                    </div>
+                    <p className="text-gray-600 mb-4">
+                      Un devis sera créé dans QuickBooks avec les informations suivantes :
+                    </p>
+                    <div className="bg-gray-50 rounded-lg p-4 mb-6 space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Soumission</span>
+                        <span className="font-medium text-gray-800">{qbModalSoumission.numero}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Client</span>
+                        <span className="font-medium text-gray-800">{qbModalSoumission.client}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Événement</span>
+                        <span className="font-medium text-gray-800">{qbModalSoumission.evenement}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Montant</span>
+                        <span className="font-medium text-gray-800">{qbModalSoumission.montant.toLocaleString()} $</span>
+                      </div>
+                    </div>
+                    <div className="flex gap-3 justify-end">
+                      <Button variant="secondary" onClick={() => setShowQBModal(false)}>
+                        Annuler
+                      </Button>
+                      <Button
+                        onClick={confirmQBQuote}
+                        className="bg-green-600 hover:bg-green-700 text-white"
+                      >
+                        Créer le devis
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+              </div>
+            )}
+
+            {/* Toast QuickBooks */}
+            {showQBToast && (
+              <div className="fixed bottom-4 right-4 bg-green-600 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 animate-fade-in z-50">
+                <QBSyncIcon className="w-5 h-5" />
+                {qbToastMessage}
+              </div>
             )}
           </div>
         );
