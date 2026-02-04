@@ -1,0 +1,49 @@
+{
+  "features": [
+    {
+      "libelle": "Tableau de bord principal avec indicateurs",
+      "montant": 3500,
+      "obligatoire": true
+    },
+    {
+      "libelle": "Gestion complète des clients",
+      "montant": 2800,
+      "obligatoire": true
+    },
+    {
+      "libelle": "Traitement intelligent des demandes",
+      "montant": 3200,
+      "obligatoire": true
+    },
+    {
+      "libelle": "Module de soumissions et événements",
+      "montant": 2500,
+      "obligatoire": true
+    },
+    {
+      "libelle": "Gestion de production et recettes",
+      "montant": 3500,
+      "obligatoire": false
+    },
+    {
+      "libelle": "Inventaire avec traçabilité HACCP",
+      "montant": 2800,
+      "obligatoire": false
+    },
+    {
+      "libelle": "Portail de commande B2B",
+      "montant": 2200,
+      "obligatoire": false
+    },
+    {
+      "libelle": "Facturation intégrée QuickBooks",
+      "montant": 1800,
+      "obligatoire": false
+    },
+    {
+      "libelle": "Rapports et analytique avancée",
+      "montant": 1500,
+      "obligatoire": false
+    }
+  ]
+}

@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Maquette</title>
+
+  <!-- Google Fonts selon le Design Brief -->
+  <link href="https://fonts.googleapis.com/css2?family=Quattrocento:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Leaflet CSS (pour cartes si nécessaire) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+  <style>
+    /* Custom scrollbar */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #f1f1f1; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+    /* Polices du Design Brief */
+    .font-display { font-family: 'Quattrocento', serif; }
+    .font-body { font-family: 'Quattrocento', sans-serif; }
+
+    /* Appliquer la police body par défaut */
+    body { font-family: 'Quattrocento', sans-serif; }
+
+    /* Animation de base pour les entrées */
+    @keyframes fade-in-up {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in-up {
+      animation: fade-in-up 0.5s ease-out forwards;
+      opacity: 0;
+    }
+
+    /* Animation de fade simple */
+    @keyframes fade-in {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .animate-fade-in {
+      animation: fade-in 0.3s ease-out forwards;
+    }
+
+    /* Animation scale */
+    @keyframes scale-in {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    .animate-scale-in {
+      animation: scale-in 0.3s ease-out forwards;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <!-- CHARGEMENT SÉQUENTIEL DES CDN - NE PAS MODIFIER -->
+  <script>
+    (function() {
+      var scripts = [
+        'https://unpkg.com/react@18/umd/react.production.min.js',
+        'https://unpkg.com/react-dom@18/umd/react-dom.production.min.js',
+        'https://unpkg.com/prop-types@15/prop-types.min.js',
+        'https://unpkg.com/recharts@2.12.7/umd/Recharts.js',
+        'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
+        'https://unpkg.com/@babel/standalone/babel.min.js'
+      ];
+      var index = 0;
+      function loadNext() {
+        if (index >= scripts.length) {
+          if (typeof Babel !== 'undefined' && Babel.transformScriptTags) {
+            Babel.transformScriptTags();
+          }
+          return;
+        }
+        var script = document.createElement('script');
+        script.src = scripts[index];
+        script.onload = function() { index++; loadNext(); };
+        script.onerror = function() { console.error('Erreur CDN: ' + scripts[index]); };
+        document.body.appendChild(script);
+      }
+      loadNext();
+    })();
+  </script>
+
+  <script type="text/babel">
+    // OBLIGATOIRE: Destructurer Recharts (NE PAS SUPPRIMER)
+    const { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area,
+            XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } = Recharts;
+
+    // ============================================================
+    // APPLICATION DE GESTION TRAITEUR - LE BANGARD INC.
+    // ============================================================
+
+    // Données mockées réalistes pour le Québec
+    const mockData = {
+      clients: [
+        { id: 1, nom: "Jean Tremblay", entreprise: "Restaurant Chez Marcel", email: "jean@chezmarcel.ca", telephone: "(514) 555-1234", type: "B2B", credit: 10000, balance: 2450, dernierCommande: "2024-02-02" },
+        { id: 2, nom: "Marie Lavoie", entreprise: "Épicerie Lavoie & Fils", email: "marie@epicerielavoie.ca", telephone: "(514) 555-5678", type: "B2B", credit: 15000, balance: 0, dernierCommande: "2024-02-03" },
+        { id: 3, nom: "Pierre Gagnon", entreprise: "Traiteur Gagnon", email: "pierre@traiteurgagnon.ca", telephone: "(450) 555-9012", type: "B2B", credit: 20000, balance: 5600, dernierCommande: "2024-01-28" },
+        { id: 4, nom: "Sophie Bouchard", entreprise: "Café Sophie", email: "sophie@cafesophie.ca", telephone: "(514) 555-3456", type: "B2B", credit: 8000, balance: 1200, dernierCommande: "2024-02-01" },
+        { id: 5, nom: "Martin Roy", entreprise: "Boulangerie Roy", email: "martin@boulangerieroy.ca", telephone: "(438) 555-7890", type: "B2B", credit: 12000, balance: 0, dernierCommande: "2024-01-30" }
+      ],
+
+      commandes: [
+        { id: 1, clientId: 1, numero: "CMD-2024-001", date: "2024-02-02", statut: "En préparation", montant: 2450, items: 12, livraison: "2024-02-05 10:00" },
+        { id: 2, clientId: 2, numero: "CMD-2024-002", date: "2024-02-03", statut: "Confirmée", montant: 1890, items: 8, livraison: "2024-02-06 14:00" },
+        { id: 3, clientId: 1, numero: "CMD-2024-003", date: "2024-02-01", statut: "Livrée", montant: 3200, items: 15, livraison: "2024-02-01 12:00" },
+        { id: 4, clientId: 3, numero: "CMD-2024-004", date: "2024-01-28", statut: "Livrée", montant: 5600, items: 25, livraison: "2024-01-28 18:00" },
+        { id: 5, clientId: 4, numero: "CMD-2024-005", date: "2024-02-01", statut: "En production", montant: 1200, items: 6, livraison: "2024-02-04 09:00" }
+      ],
+
+      produits: [
+        { id: 1, nom: "Plateau de sandwichs variés", sku: "PLT-001", categorie: "Plateaux", prix: 65, stock: 50, unite: "plateau", allergenes: ["Gluten", "Œufs", "Moutarde"] },
+        { id: 2, nom: "Salade César", sku: "SAL-001", categorie: "Salades", prix: 45, stock: 30, unite: "bol", allergenes: ["Œufs", "Poisson", "Lait"] },
+        { id: 3, nom: "Wrap végétarien", sku: "WRP-001", categorie: "Wraps", prix: 8.50, stock: 100, unite: "unité", allergenes: ["Gluten", "Soja"] },
+        { id: 4, nom: "Box à lunch complète", sku: "BOX-001", categorie: "Boîtes", prix: 18.50, stock: 75, unite: "boîte", allergenes: ["Variable"] },
+        { id: 5, nom: "Plateau de fruits frais", sku: "PLT-002", categorie: "Plateaux", prix: 55, stock: 40, unite: "plateau", allergenes: [] }
+      ],
+
+      recettes: [
+        { id: 1, nom: "Sandwich au poulet grillé", rendement: 10, unite: "portions", coutMatiere: 3.25, tempsPrepMinutes: 15, allergenes: ["Gluten", "Moutarde"] },
+        { id: 2, nom: "Salade César maison", rendement: 20, unite: "portions", coutMatiere: 2.15, tempsPrepMinutes: 20, allergenes: ["Œufs", "Poisson", "Lait"] },
+        { id: 3, nom: "Wrap végétarien deluxe", rendement: 15, unite: "unités", coutMatiere: 2.80, tempsPrepMinutes: 25, allergenes: ["Gluten", "Soja"] },
+        { id: 4, nom: "Mousse au chocolat", rendement: 30, unite: "portions", coutMatiere: 1.50, tempsPrepMinutes: 45, allergenes: ["Lait", "Œufs"] },
+        { id: 5, nom: "Soupe du jour", rendement: 5, unite: "litres", coutMatiere: 8.00, tempsPrepMinutes: 60, allergenes: ["Variable"] }
+      ],
+
+      inventaire: [
+        { id: 1, nom: "Farine tout usage", sku: "ING-001", stock: 40, unite: "kg", seuil: 20, lot: "LOT-2024-015", peremption: "2024-06-15", emplacement: "Réserve sèche A3" },
+        { id: 2, nom: "Poulet frais", sku: "ING-002", stock: 25, unite: "kg", seuil: 10, lot: "LOT-2024-022", peremption: "2024-02-08", emplacement: "Frigo 1" },
+        { id: 3, nom: "Tomates fraîches", sku: "ING-003", stock: 15, unite: "kg", seuil: 8, lot: "LOT-2024-018", peremption: "2024-02-10", emplacement: "Frigo 2" },
+        { id: 4, nom: "Huile d'olive", sku: "ING-004", stock: 20, unite: "litres", seuil: 10, lot: "LOT-2023-145", peremption: "2025-01-15", emplacement: "Réserve sèche B2" },
+        { id: 5, nom: "Fromage parmesan", sku: "ING-005", stock: 8, unite: "kg", seuil: 5, lot: "LOT-2024-009", peremption: "2024-03-20", emplacement: "Frigo 3" }
+      ],
+
+      evenements: [
+        { id: 1, nom: "Cocktail d'entreprise ABC Inc.", date: "2024-02-10", heure: "17:00", convives: 150, lieu: "Centre-ville Montréal", statut: "Confirmé", responsable: "Marie Lavoie" },
+        { id: 2, nom: "Lunch corporatif Banque XYZ", date: "2024-02-08", heure: "12:00", convives: 50, lieu: "Tour de la Banque", statut: "En planification", responsable: "Jean Tremblay" },
+        { id: 3, nom: "Mariage Tremblay-Gagnon", date: "2024-06-15", heure: "18:00", convives: 200, lieu: "Vignoble de l'Orpailleur", statut: "Soumission", responsable: "Sophie Bouchard" }
+      ],
+
+      demandes: [
+        { id: 1, source: "Email", date: "2024-02-04 09:15", client: "Nouveau client", objet: "Demande de soumission - Événement corporatif", statut: "Nouvelle", priorite: "Normale" },
+        { id: 2, source: "Téléphone", date: "2024-02-04 10:30", client: "Jean Tremblay", objet: "Modification commande CMD-2024-001", statut: "En traitement", priorite: "Urgente" },
+        { id: 3, source: "Web", date: "2024-02-03 14:45", client: "Sophie Bouchard", objet: "Question sur allergènes", statut: "Fermée", priorite: "Normale" }
+      ],
+
+      stats: {
+        ventesJour: 4530,
+        ventesHier: 3890,
+        commandesJour: 12,
+        nouveauxClients: 3,
+        tauxConversion: 68
+      }
+    };
+
+    // État de navigation 5 NIVEAUX
+    function App() {
+      const [activeTab, setActiveTab] = React.useState('dashboard');
+      const [view, setView] = React.useState({
+        screen: 'list',
+        entityType: null,
+        entityId: null,
+        subEntityType: null,
+        subEntityId: null
+      });
+
+      const [showModal, setShowModal] = React.useState(false);
+      const [searchTerm, setSearchTerm] = React.useState('');
+
+      // Navigation 5 niveaux
+      const goToList = (type) => setView({
+        screen: 'list', entityType: type, entityId: null, subEntityType: null, subEntityId: null
+      });
+
+      const goToDetail = (type, id) => setView({
+        screen: 'detail', entityType: type, entityId: id, subEntityType: null, subEntityId: null
+      });
+
+      const goToSubList = (parentType, parentId, subType) => setView({
+        screen: 'sublist', entityType: parentType, entityId: parentId, subEntityType: subType, subEntityId: null
+      });
+
+      const goToEdit = (type, id) => setView({
+        screen: 'edit', entityType: type, entityId: id, subEntityType: null, subEntityId: null
+      });
+
+      const goToSubDetail = (parentType, parentId, subType, subId) => setView({
+        screen: 'subdetail', entityType: parentType, entityId: parentId, subEntityType: subType, subEntityId: subId
+      });
+
+      const goToSubEdit = (parentType, parentId, subType, subId) => setView({
+        screen: 'subedit', entityType: parentType, entityId: parentId, subEntityType: subType, subEntityId: subId
+      });
+
+      // Composant BackButton
+      const BackButton = ({ onClick, label = "Retour" }) => (
+        <button
+          onClick={onClick}
+          className="flex items-center gap-2 text-gray-400 hover:text-gray-100 mb-6 transition-colors"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          <span className="font-display">{label}</span>
+        </button>
+      );
+
+      // Composant Card élégant
+      const Card = ({ children, className = "", hover = false }) => (
+        <div className={`bg-gray-800 rounded-xl border border-gray-700 ${hover ? 'hover:border-gray-600 transition-all duration-300 hover:shadow-xl hover:shadow-black/50' : ''} ${className}`}>
+          {children}
+        </div>
+      );
+
+      // Composant Button raffiné
+      const Button = ({ children, onClick, variant = "primary", size = "md", className = "" }) => {
+        const variants = {
+          primary: "bg-black text-white hover:bg-gray-900 border-2 border-black",
+          secondary: "bg-gray-700 text-gray-100 hover:bg-gray-600 border-2 border-gray-600",
+          ghost: "text-gray-300 hover:text-white hover:bg-gray-800 border-2 border-transparent"
+        };
+
+        const sizes = {
+          sm: "px-3 py-1.5 text-sm",
+          md: "px-4 py-2",
+          lg: "px-6 py-3 text-lg"
+        };
+
+        return (
+          <button
+            onClick={onClick}
+            className={`font-display font-medium rounded-lg transition-all duration-200 ${variants[variant]} ${sizes[size]} ${className}`}
+          >
+            {children}
+          </button>
+        );
+      };
+
+      // Composant Dashboard
+      const Dashboard = () => {
+        const statsCards = [
+          { label: "Ventes aujourd'hui", value: `${mockData.stats.ventesJour.toLocaleString()} $`, change: "+16%", icon: "💰" },
+          { label: "Commandes", value: mockData.stats.commandesJour, change: "+3", icon: "📦" },
+          { label: "Nouveaux clients", value: mockData.stats.nouveauxClients, change: "", icon: "👥" },
+          { label: "Taux conversion", value: `${mockData.stats.tauxConversion}%`, change: "+5%", icon: "📈" }
+        ];
+
+        // Données pour le graphique
+        const revenueData = [
+          { jour: 'Lun', montant: 3200 },
+          { jour: 'Mar', montant: 4100 },
+          { jour: 'Mer', montant: 3800 },
+          { jour: 'Jeu', montant: 3890 },
+          { jour: 'Ven', montant: 4530 },
+          { jour: 'Sam', montant: 5200 },
+          { jour: 'Dim', montant: 2100 }
+        ];
+
+        return (
+          <div className="space-y-8">
+            <div className="flex items-center justify-between">
+              <h1 className="text-3xl font-display font-bold text-gray-100">Tableau de bord</h1>
+              <div className="text-sm text-gray-400">{new Date().toLocaleDateString('fr-CA')}</div>
+            </div>
+
+            {/* KPIs */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {statsCards.map((stat, i) => (
+                <Card key={i} className="p-6 animate-fade-in-up" style={{ animationDelay: `${i * 100}ms` }}>
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-2">
+                      <p className="text-sm text-gray-400 font-body">{stat.label}</p>
+                      <p className="text-2xl font-display font-bold text-gray-100">{stat.value}</p>
+                      {stat.change && (
+                        <p className={`text-sm ${stat.change.includes('+') ? 'text-green-400' : 'text-gray-400'}`}>
+                          {stat.change}
+                        </p>
+                      )}
+                    </div>
+                    <div className="text-3xl opacity-20">{stat.icon}</div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+
+            {/* Graphique des revenus */}
+            <Card className="p-6">
+              <h2 className="text-xl font-display font-semibold text-gray-100 mb-6">Revenus de la semaine</h2>
+              <ResponsiveContainer width="100%" height={300}>
+                <AreaChart data={revenueData}>
+                  <defs>
+                    <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#000000" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#000000" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                  <XAxis dataKey="jour" stroke="#9CA3AF" />
+                  <YAxis stroke="#9CA3AF" />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151', borderRadius: '8px' }}
+                    labelStyle={{ color: '#E5E7EB' }}
+                  />
+                  <Area type="monotone" dataKey="montant" stroke="#000000" fillOpacity={1} fill="url(#colorRevenue)" strokeWidth={2} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </Card>
+
+            {/* Actions rapides */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <Card hover className="p-6 cursor-pointer" onClick={() => { setActiveTab('demandes'); }}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-display font-semibold text-gray-100">Nouvelles demandes</h3>
+                    <p className="text-2xl font-bold text-gray-100 mt-2">3</p>
+                    <p className="text-sm text-gray-400">à traiter</p>
+                  </div>
+                  <svg className="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                  </svg>
+                </div>
+              </Card>
+
+              <Card hover className="p-6 cursor-pointer" onClick={() => { setActiveTab('production'); }}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-display font-semibold text-gray-100">Commandes du jour</h3>
+                    <p className="text-2xl font-bold text-gray-100 mt-2">12</p>
+                    <p className="text-sm text-gray-400">en production</p>
+                  </div>
+                  <svg className="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                  </svg>
+                </div>
+              </Card>
+
+              <Card hover className="p-6 cursor-pointer" onClick={() => { setActiveTab('inventaire'); }}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-display font-semibold text-gray-100">Alertes inventaire</h3>
+                    <p className="text-2xl font-bold text-red-400 mt-2">2</p>
+                    <p className="text-sm text-gray-400">stocks critiques</p>
+                  </div>
+                  <svg className="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
+              </Card>
+            </div>
+          </div>
+        );
+      };
+
+      // Composant Liste des Clients
+      const ClientList = ({ onSelect }) => {
+        const filteredClients = mockData.clients.filter(client =>
+          client.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          client.entreprise.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+
+        return (
+          <div className="space-y-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <h1 className="text-2xl font-display font-bold text-gray-100">Clients</h1>
+              <div className="flex gap-3">
+                <input
+                  type="text"
+                  placeholder="Rechercher..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black/50 focus:border-transparent"
+                />
+                <Button onClick={() => setShowModal(true)}>
+                  Nouveau client
+                </Button>
+              </div>
+            </div>
+
+            <Card className="overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-900/50 border-b border-gray-700">
+                    <tr>
+                      <th className="px-6 py-4 text-left text-sm font-display font-medium text-gray-400">Nom</th>
+                      <th className="px-6 py-4 text-left text-sm font-display font-medium text-gray-400">Entreprise</th>
+                      <th className="px-6 py-4 text-left text-sm font-display font-medium text-gray-400">Contact</th>
+                      <th className="px-6 py-4 text-left text-sm font-display font-medium text-gray-400">Balance</th>
+                      <th className="px-6 py-4 text-right text-sm font-display font-medium text-gray-400">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-700">
+                    {filteredClients.map((client, i) => (
+                      <tr
+                        key={client.id}
+                        onClick={() => onSelect(client.id)}
+                        className="hover:bg-gray-800/50 cursor-pointer transition-colors animate-fade-in-up"
+                        style={{ animationDelay: `${i * 50}ms` }}
+                      >
+                        <td className="px-6 py-4 text-gray-100 font-body">{client.nom}</td>
+                        <td className="px-6 py-4 text-gray-100">{client.entreprise}</td>
+                        <td className="px-6 py-4">
+                          <div className="text-sm">
+                            <div className="text-gray-100">{client.email}</div>
+                            <div className="text-gray-400">{client.telephone}</div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`font-semibold ${client.balance > 0 ? 'text-orange-400' : 'text-green-400'}`}>
+                            {client.balance.toLocaleString()} $
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); goToEdit('client', client.id); }}
+                            className="text-gray-400 hover:text-gray-100 transition-colors"
+                          >
+                            Modifier
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+          </div>
+        );
+      };
+
+      // Composant Détail Client
+      const ClientDetail = ({ clientId, onBack }) => {
+        const client = mockData.clients.find(c => c.id === clientId);
+        if (!client) return <div>Client non trouvé</div>;
+
+        const clientCommandes = mockData.commandes.filter(c => c.clientId === clientId);
+
+        return (
+          <div className="space-y-6">
+            <BackButton onClick={onBack} label="Retour aux clients" />
+
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-display font-bold text-gray-100">{client.nom}</h1>
+                <p className="text-lg text-gray-400">{client.entreprise}</p>
+              </div>
+              <div className="flex gap-3">
+                <Button variant="secondary" onClick={() => goToEdit('client', clientId)}>Modifier</Button>
+                <Button variant="ghost">Supprimer</Button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Card className="p-6">
+                <h3 className="font-display font-semibold text-gray-100 mb-4">Informations de contact</h3>
+                <dl className="space-y-3">
+                  <div>
+                    <dt className="text-sm text-gray-400 font-body">Email</dt>
+                    <dd className="text-gray-100">{client.email}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-sm text-gray-400 font-body">Téléphone</dt>
+                    <dd className="text-gray-100">{client.telephone}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-sm text-gray-400 font-body">Type</dt>
+                    <dd className="text-gray-100">{client.type}</dd>
+                  </div>
+                </dl>
+              </Card>
+
+              <Card className="p-6">
+                <h3 className="font-display font-semibold text-gray-100 mb-4">Informations financières</h3>
+                <dl className="space-y-3">
+                  <div>
+                    <dt className="text-sm text-gray-400 font-body">Limite de crédit</dt>
+                    <dd className="text-gray-100">{client.credit.toLocaleString()} $</dd>
+                  </div>
+                  <div>
+                    <dt className="text-sm text-gray-400 font-body">Balance actuelle</dt>
+                    <dd className={`font-semibold ${client.balance > 0 ? 'text-orange-400' : 'text-green-400'}`}>
+                      {client.balance.toLocaleString()} $
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-sm text-gray-400 font-body">Dernière commande</dt>
+                    <dd className="text-gray-100">{client.dernierCommande}</dd>
+                  </div>
+                </dl>
+              </Card>
+            </div>
+
+            {/* Section des commandes récentes */}
+            <Card className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-display font-semibold text-gray-100">Commandes récentes</h3>
+                <button
+                  onClick={() => goToSubList('client', clientId, 'commande')}
+                  className="text-sm text-gray-400 hover:text-gray-100 transition-colors flex items-center gap-1"
+                >
+                  Voir toutes les commandes
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                {clientCommandes.slice(0, 3).map(cmd => (
+                  <div
+                    key={cmd.id}
+                    onClick={() => goToSubDetail('client', clientId, 'commande', cmd.id)}
+                    className="p-4 bg-gray-900/30 rounded-lg hover:bg-gray-900/50 cursor-pointer transition-colors"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-gray-100">{cmd.numero}</p>
+                        <p className="text-sm text-gray-400">{cmd.date} • {cmd.items} items</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold text-gray-100">{cmd.montant.toLocaleString()} $</p>
+                        <p className="text-sm text-gray-400">{cmd.statut}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </div>
+        );
+      };
+
+      // Composant Liste des Commandes d'un client (Niveau 3)
+      const CommandesList = ({ clientId, onBack, onSelect }) => {
+        const client = mockData.clients.find(c => c.id === clientId);
+        const clientCommandes = mockData.commandes.filter(c => c.clientId === clientId);
+
+        return (
+          <div className="space-y-6">
+            <BackButton onClick={onBack} label={`Retour à ${client.nom}`} />
+
+            <div>
+              <h1 className="text-2xl font-display font-bold text-gray-100">Commandes de {client.nom}</h1>
+              <p className="text-gray-400">{client.entreprise}</p>
+            </div>
+
+            <Card className="overflow-hidden">
+              <table className="w-full">
+                <thead className="bg-gray-900/50 border-b border-gray-700">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-sm font-display font-medium text-gray-400">Numéro</th>
+                    <th className="px-6 py-4 text-left text-sm font-display font-medium text-gray-400">Date</th>
+                    <th className="px-6 py-4 text-left text-sm font-display font-medium text-gray-400">Statut</th>
+                    <th className="px-6 py-4 text-left text-sm font-display font-medium text-gray-400">Livraison</th>
+                    <th className="px-6 py-4 text-right text-sm font-display font-medium text-gray-400">Montant</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-700">
+                  {clientCommandes.map(cmd => (
+                    <tr
+                      key={cmd.id}
+                      onClick={() => onSelect(cmd.id)}
+                      className="hover:bg-gray-800/50 cursor-pointer transition-colors"
+                    >
+                      <td className="px-6 py-4 font-medium text-gray-100">{cmd.numero}</td>
+                      <td className="px-6 py-4 text-gray-100">{cmd.date}</td>
+                      <td className="px-6 py-4">
+                        <span className={`px-2 py-1 text-xs rounded-full ${
+                          cmd.statut === 'Livrée' ? 'bg-green-900/50 text-green-400' :
+                          cmd.statut === 'En préparation' ? 'bg-blue-900/50 text-blue-400' :
+                          cmd.statut === 'Confirmée' ? 'bg-gray-700 text-gray-300' :
+                          'bg-yellow-900/50 text-yellow-400'
+                        }`}>
+                          {cmd.statut}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-gray-100">{cmd.livraison}</td>
+                      <td className="px-6 py-4 text-right font-semibold text-gray-100">
+                        {cmd.montant.toLocaleString()} $
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </Card>
+          </div>
+        );
+      };
+
+      // Composant Détail Commande (Niveau 4)
+      const CommandeDetail = ({ commandeId, onBack, onEdit }) => {
+        const commande = mockData.commandes.find(c => c.id === commandeId);
+        const client = mockData.clients.find(c => c.id === commande?.clientId);
+
+        if (!commande) return <div>Commande non trouvée</div>;
+
+        return (
+          <div className="space-y-6">
+            <BackButton onClick={onBack} label="Retour aux commandes" />
+
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl font-display font-bold text-gray-100">Commande {commande.numero}</h1>
+                <p className="text-gray-400">{client.nom} - {client.entreprise}</p>
+              </div>
+              <Button onClick={() => onEdit()}>Modifier</Button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <Card className="p-6">
+                <h3 className="font-display font-semibold text-gray-100 mb-3">Informations</h3>
+                <dl className="space-y-2">
+                  <div>
+                    <dt className="text-sm text-gray-400">Date commande</dt>
+                    <dd className="text-gray-100">{commande.date}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-sm text-gray-400">Livraison prévue</dt>
+                    <dd className="text-gray-100">{commande.livraison}</dd>
+                  </div>
+                </dl>
+              </Card>
+
+              <Card className="p-6">
+                <h3 className="font-display font-semibold text-gray-100 mb-3">Statut</h3>
+                <span className={`inline-block px-3 py-1.5 text-sm rounded-full ${
+                  commande.statut === 'Livrée' ? 'bg-green-900/50 text-green-400' :
+                  commande.statut === 'En préparation' ? 'bg-blue-900/50 text-blue-400' :
+                  'bg-yellow-900/50 text-yellow-400'
+                }`}>
+                  {commande.statut}
+                </span>
+              </Card>
+
+              <Card className="p-6">
+                <h3 className="font-display font-semibold text-gray-100 mb-3">Total</h3>
+                <p className="text-2xl font-bold text-gray-100">{commande.montant.toLocaleString()} $</p>
+                <p className="text-sm text-gray-400">{commande.items} articles</p>
+              </Card>
+            </div>
+
+            <Card className="p-6">
+              <h3 className="font-display font-semibold text-gray-100 mb-4">Articles commandés</h3>
+              <div className="space-y-3">
+                <div className="p-4 bg-gray-900/30 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-gray-100">Plateau de sandwichs variés</p>
+                      <p className="text-sm text-gray-400">3 unités × 65 $</p>
+                    </div>
+                    <p className="font-semibold text-gray-100">195 $</p>
+                  </div>
+                </div>
+                <div className="p-4 bg-gray-900/30 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-gray-100">Box à lunch complète</p>
+                      <p className="text-sm text-gray-400">50 unités × 18.50 $</p>
+                    </div>
+                    <p className="font-semibold text-gray-100">925 $</p>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          </div>
+        );
+      };
+
+      // Composant Édition Commande (Niveau 5)
+      const CommandeEdit = ({ commandeId, onBack }) => {
+        const commande = mockData.commandes.find(c => c.id === commandeId);
+        const [formData, setFormData] = React.useState({
+          statut: commande?.statut || '',
+          livraison: commande?.livraison || ''
+        });
+
+        return (
+          <div className="space-y-6">
+            <BackButton onClick={onBack} label="Retour au détail" />
+
+            <h1 className="text-2xl font-display font-bold text-gray-100">
+              Modifier commande {commande?.numero}
+            </h1>
+
+            <Card className="p-6">
+              <form className="space-y-4" onSubmit={(e) => {
+                e.preventDefault();
+                // Sauvegarder et retourner
+                onBack();
+              }}>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Statut
+                  </label>
+                  <select
+                    value={formData.statut}
+                    onChange={(e) => setFormData({...formData, statut: e.target.value})}
+                    className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-100 focus:outline-none focus:ring-2 focus:ring-black/50"
+                  >
+                    <option value="Confirmée">Confirmée</option>
+                    <option value="En préparation">En préparation</option>
+                    <option value="En production">En production</option>
+                    <option value="Livrée">Livrée</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Date et heure de livraison
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.livraison}
+                    onChange={(e) => setFormData({...formData, livraison: e.target.value})}
+                    className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-100 focus:outline-none focus:ring-2 focus:ring-black/50"
+                  />
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                  <Button type="submit">Enregistrer</Button>
+                  <Button type="button" variant="secondary" onClick={onBack}>Annuler</Button>
+                </div>
+              </form>
+            </Card>
+          </div>
+        );
+      };
+
+      // Composant Production
+      const Production = () => {
+        const commandesJour = mockData.commandes.filter(c =>
+          c.livraison.includes('2024-02-04') || c.livraison.includes('2024-02-05')
+        );
+
+        return (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h1 className="text-2xl font-display font-bold text-gray-100">Production du jour</h1>
+              <Button>Générer prep list</Button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Card className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-400">À préparer</p>
+                    <p className="text-2xl font-bold text-gray-100">5</p>
+                  </div>
+                  <div className="w-12 h-12 bg-yellow-900/20 rounded-lg flex items-center justify-center">
+                    <span className="text-yellow-400">⏳</span>
+                  </div>
+                </div>
+              </Card>
+
+              <Card className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-400">En production</p>
+                    <p className="text-2xl font-bold text-gray-100">3</p>
+                  </div>
+                  <div className="w-12 h-12 bg-blue-900/20 rounded-lg flex items-center justify-center">
+                    <span className="text-blue-400">🔥</span>
+                  </div>
+                </div>
+              </Card>
+
+              <Card className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-400">Terminées</p>
+                    <p className="text-2xl font-bold text-gray-100">8</p>
+                  </div>
+                  <div className="w-12 h-12 bg-green-900/20 rounded-lg flex items-center justify-center">
+                    <span className="text-green-400">✓</span>
+                  </div>
+                </div>
+              </Card>
+            </div>
+
+            <Card className="overflow-hidden">
+              <div className="p-4 border-b border-gray-700">
+                <h2 className="font-display font-semibold text-gray-100">Commandes à produire</h2>
+              </div>
+              <div className="divide-y divide-gray-700">
+                {commandesJour.map(cmd => {
+                  const client = mockData.clients.find(c => c.id === cmd.clientId);
+                  return (
+                    <div key={cmd.id} className="p-4 hover:bg-gray-800/50 transition-colors">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium text-gray-100">{cmd.numero}</p>
+                          <p className="text-sm text-gray-400">{client?.nom} • {cmd.items} items</p>
+                          <p className="text-sm text-gray-500">Livraison: {cmd.livraison}</p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className={`px-2 py-1 text-xs rounded-full ${
+                            cmd.statut === 'En production' ? 'bg-blue-900/50 text-blue-400' :
+                            cmd.statut === 'En préparation' ? 'bg-yellow-900/50 text-yellow-400' :
+                            'bg-gray-700 text-gray-300'
+                          }`}>
+                            {cmd.statut}
+                          </span>
+                          <Button size="sm">Voir détails</Button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </Card>
+          </div>
+        );
+      };
+
+      // Navigation et menu principal
+      const menuItems = [
+        { id: 'dashboard', label: 'Tableau de bord', icon: '📊' },
+        { id: 'demandes', label: 'Demandes', icon: '📧' },
+        { id: 'clients', label: 'Clients', icon: '👥' },
+        { id: 'soumissions', label: 'Soumissions', icon: '💼' },
+        { id: 'production', label: 'Production', icon: '👨‍🍳' },
+        { id: 'inventaire', label: 'Inventaire', icon: '📦' },
+        { id: 'factures', label: 'Facturation', icon: '💰' },
+        { id: 'rapports', label: 'Rapports', icon: '📈' }
+      ];
+
+      return (
+        <div className="min-h-screen bg-gray-900">
+          {/* Header avec logo */}
+          <header className="bg-black border-b border-gray-800">
+            <div className="container mx-auto px-4 py-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <img
+                    src="https://lebangard.com/favicon-192x192.png"
+                    alt="Le Bangard Inc."
+                    className="h-10 w-10"
+                    onError={(e) => { e.target.src = "https://lebangard.com/favicon-180x180.png"; }}
+                  />
+                  <h1 className="text-xl font-display font-bold text-gray-100">Le Bangard Inc.</h1>
+                </div>
+                <div className="flex items-center gap-4">
+                  <span className="text-sm text-gray-400">Gestion Traiteur</span>
+                </div>
+              </div>
+            </div>
+          </header>
+
+          <div className="flex">
+            {/* Sidebar */}
+            <aside className="hidden lg:block w-64 bg-gray-800 border-r border-gray-700 min-h-screen">
+              <nav className="p-4 space-y-1">
+                {menuItems.map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => { setActiveTab(item.id); goToList(item.id); }}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 font-body ${
+                      activeTab === item.id
+                        ? 'bg-black text-white shadow-lg'
+                        : 'text-gray-400 hover:bg-gray-700 hover:text-gray-100'
+                    }`}
+                  >
+                    <span className="text-xl opacity-70">{item.icon}</span>
+                    <span className="font-medium">{item.label}</span>
+                  </button>
+                ))}
+              </nav>
+            </aside>
+
+            {/* Navigation mobile */}
+            <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-gray-800 border-t border-gray-700 z-50">
+              <div className="grid grid-cols-4 gap-1 p-2">
+                {menuItems.slice(0, 4).map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => { setActiveTab(item.id); goToList(item.id); }}
+                    className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-colors ${
+                      activeTab === item.id
+                        ? 'bg-black text-white'
+                        : 'text-gray-400'
+                    }`}
+                  >
+                    <span className="text-xl">{item.icon}</span>
+                    <span className="text-xs font-body">{item.label}</span>
+                  </button>
+                ))}
+              </div>
+            </nav>
+
+            {/* Contenu principal */}
+            <main className="flex-1 p-4 md:p-8 pb-20 lg:pb-8">
+              <div className="container mx-auto max-w-7xl">
+                {activeTab === 'dashboard' && <Dashboard />}
+
+                {activeTab === 'clients' && (
+                  <>
+                    {view.screen === 'list' && (
+                      <ClientList onSelect={(id) => goToDetail('client', id)} />
+                    )}
+                    {view.screen === 'detail' && view.entityType === 'client' && (
+                      <ClientDetail
+                        clientId={view.entityId}
+                        onBack={() => goToList('client')}
+                      />
+                    )}
+                    {view.screen === 'sublist' && view.subEntityType === 'commande' && (
+                      <CommandesList
+                        clientId={view.entityId}
+                        onBack={() => goToDetail('client', view.entityId)}
+                        onSelect={(cmdId) => goToSubDetail('client', view.entityId, 'commande', cmdId)}
+                      />
+                    )}
+                    {view.screen === 'subdetail' && view.subEntityType === 'commande' && (
+                      <CommandeDetail
+                        commandeId={view.subEntityId}
+                        onBack={() => goToSubList('client', view.entityId, 'commande')}
+                        onEdit={() => goToSubEdit('client', view.entityId, 'commande', view.subEntityId)}
+                      />
+                    )}
+                    {view.screen === 'subedit' && view.subEntityType === 'commande' && (
+                      <CommandeEdit
+                        commandeId={view.subEntityId}
+                        onBack={() => goToSubDetail('client', view.entityId, 'commande', view.subEntityId)}
+                      />
+                    )}
+                  </>
+                )}
+
+                {activeTab === 'production' && <Production />}
+
+                {/* Autres onglets à implémenter */}
+                {['demandes', 'soumissions', 'inventaire', 'factures', 'rapports'].includes(activeTab) && (
+                  <div className="space-y-6">
+                    <h1 className="text-2xl font-display font-bold text-gray-100 capitalize">{activeTab}</h1>
+                    <Card className="p-8 text-center">
+                      <p className="text-gray-400">Module {activeTab} - En développement</p>
+                    </Card>
+                  </div>
+                )}
+              </div>
+            </main>
+          </div>
+
+          {/* Modal exemple */}
+          {showModal && (
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+              <Card className="w-full max-w-md animate-scale-in">
+                <div className="p-6">
+                  <h2 className="text-xl font-display font-semibold text-gray-100 mb-4">Nouveau client</h2>
+                  <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); setShowModal(false); }}>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-1">Nom</label>
+                      <input
+                        type="text"
+                        className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-100 focus:outline-none focus:ring-2 focus:ring-black/50"
+                        placeholder="Jean Tremblay"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-1">Entreprise</label>
+                      <input
+                        type="text"
+                        className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-100 focus:outline-none focus:ring-2 focus:ring-black/50"
+                        placeholder="Restaurant ABC"
+                      />
+                    </div>
+                    <div className="flex gap-3 pt-4">
+                      <Button type="submit">Créer</Button>
+                      <Button type="button" variant="secondary" onClick={() => setShowModal(false)}>
+                        Annuler
+                      </Button>
+                    </div>
+                  </form>
+                </div>
+              </Card>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
