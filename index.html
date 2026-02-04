@@ -2322,6 +2322,718 @@
         );
       };
 
+      // Composant Inventaire
+      const Inventaire = () => {
+        const [articles, setArticles] = React.useState(mockData.inventaire);
+        const [showAddArticle, setShowAddArticle] = React.useState(false);
+        const [showReception, setShowReception] = React.useState(false);
+        const [selectedArticle, setSelectedArticle] = React.useState(null);
+        const [activeSubTab, setActiveSubTab] = React.useState('articles');
+        const [mouvements, setMouvements] = React.useState([
+          {
+            id: 1,
+            date: '2024-02-04 10:30',
+            type: 'Entrée',
+            article: 'Farine tout usage',
+            quantite: 20,
+            unite: 'kg',
+            lot: 'LOT-2024-025',
+            motif: 'Réception fournisseur',
+            responsable: 'Marie Lavoie'
+          },
+          {
+            id: 2,
+            date: '2024-02-04 09:15',
+            type: 'Sortie',
+            article: 'Poulet frais',
+            quantite: 5,
+            unite: 'kg',
+            lot: 'LOT-2024-022',
+            motif: 'Production - Sandwichs poulet',
+            responsable: 'Chef Pierre'
+          },
+          {
+            id: 3,
+            date: '2024-02-03 16:45',
+            type: 'Ajustement',
+            article: 'Tomates fraîches',
+            quantite: -2,
+            unite: 'kg',
+            lot: 'LOT-2024-018',
+            motif: 'Perte - produits abîmés',
+            responsable: 'Marie Lavoie'
+          }
+        ]);
+
+        // Calculs pour les statistiques
+        const articlesEnAlerte = articles.filter(a => a.stock <= a.seuil).length;
+        const valeurtotale = articles.reduce((sum, a) => sum + (a.stock * 15), 0); // Prix moyen estimé
+        const lotsExpirantBientot = articles.filter(a => {
+          const daysUntilExpiry = Math.floor((new Date(a.peremption) - new Date()) / (1000 * 60 * 60 * 24));
+          return daysUntilExpiry <= 7 && daysUntilExpiry >= 0;
+        }).length;
+
+        // Fonction pour obtenir la couleur du statut
+        const getStatutColor = (article) => {
+          const daysUntilExpiry = Math.floor((new Date(article.peremption) - new Date()) / (1000 * 60 * 60 * 24));
+
+          if (article.stock <= article.seuil) return 'text-red-400 bg-red-900/20';
+          if (daysUntilExpiry <= 3 && daysUntilExpiry >= 0) return 'text-orange-400 bg-orange-900/20';
+          if (daysUntilExpiry <= 7 && daysUntilExpiry >= 0) return 'text-yellow-400 bg-yellow-900/20';
+          return 'text-green-400 bg-green-900/20';
+        };
+
+        // Fonction pour obtenir le badge de statut
+        const getStatutBadge = (article) => {
+          const daysUntilExpiry = Math.floor((new Date(article.peremption) - new Date()) / (1000 * 60 * 60 * 24));
+
+          if (article.stock <= article.seuil) return 'Stock bas';
+          if (daysUntilExpiry < 0) return 'Expiré';
+          if (daysUntilExpiry === 0) return 'Expire aujourd\'hui';
+          if (daysUntilExpiry <= 3) return `Expire dans ${daysUntilExpiry}j`;
+          if (daysUntilExpiry <= 7) return 'Expiration proche';
+          return 'OK';
+        };
+
+        // Composant pour la modal d'ajout d'article
+        const AddArticleModal = () => (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <Card className="w-full max-w-2xl animate-scale-in">
+              <div className="p-6">
+                <h2 className="text-xl font-display font-semibold text-gray-800 mb-6">Nouvel article</h2>
+                <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); setShowAddArticle(false); }}>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Code SKU</label>
+                      <input
+                        type="text"
+                        className="w-full px-4 py-2 bg-white border border-gray-400 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-black/50"
+                        placeholder="ING-006"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Nom de l'article</label>
+                      <input
+                        type="text"
+                        className="w-full px-4 py-2 bg-white border border-gray-400 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-black/50"
+                        placeholder="Ex: Beurre non salé"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Catégorie</label>
+                      <select className="w-full px-4 py-2 bg-white border border-gray-400 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-black/50">
+                        <option value="">Sélectionner...</option>
+                        <option value="produits-laitiers">Produits laitiers</option>
+                        <option value="viandes">Viandes et volailles</option>
+                        <option value="legumes">Légumes frais</option>
+                        <option value="fruits">Fruits frais</option>
+                        <option value="sec">Produits secs</option>
+                        <option value="surgeles">Surgelés</option>
+                        <option value="condiments">Condiments et sauces</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Fournisseur principal</label>
+                      <select className="w-full px-4 py-2 bg-white border border-gray-400 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-black/50">
+                        <option value="">Sélectionner...</option>
+                        <option value="metro">Metro</option>
+                        <option value="sysco">Sysco</option>
+                        <option value="gfs">GFS</option>
+                        <option value="local">Fournisseur local</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Unité de stock</label>
+                      <select className="w-full px-4 py-2 bg-white border border-gray-400 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-black/50">
+                        <option value="kg">kg</option>
+                        <option value="litres">litres</option>
+                        <option value="unites">unités</option>
+                        <option value="boites">boîtes</option>
+                        <option value="sacs">sacs</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Stock actuel</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        className="w-full px-4 py-2 bg-white border border-gray-400 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-black/50"
+                        placeholder="0"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Seuil d'alerte</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        className="w-full px-4 py-2 bg-white border border-gray-400 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-black/50"
+                        placeholder="10"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Emplacement de stockage</label>
+                    <input
+                      type="text"
+                      className="w-full px-4 py-2 bg-white border border-gray-400 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-black/50"
+                      placeholder="Ex: Frigo 1 - Étagère 2"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Allergènes (sélectionner tous ceux qui s'appliquent)</label>
+                    <div className="grid grid-cols-3 gap-2 mt-2">
+                      {['Arachides', 'Noix', 'Lait', 'Œufs', 'Gluten', 'Soja', 'Poisson', 'Crustacés', 'Sésame'].map(allergene => (
+                        <label key={allergene} className="flex items-center space-x-2">
+                          <input type="checkbox" className="rounded text-black focus:ring-black" />
+                          <span className="text-sm text-gray-800">{allergene}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3 pt-4">
+                    <Button type="submit">Créer l'article</Button>
+                    <Button type="button" variant="secondary" onClick={() => setShowAddArticle(false)}>
+                      Annuler
+                    </Button>
+                  </div>
+                </form>
+              </div>
+            </Card>
+          </div>
+        );
+
+        // Composant pour la modal de réception
+        const ReceptionModal = () => (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <Card className="w-full max-w-2xl animate-scale-in">
+              <div className="p-6">
+                <h2 className="text-xl font-display font-semibold text-gray-800 mb-6">Réception de marchandise</h2>
+                <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); setShowReception(false); }}>
+                  <div className="bg-yellow-900/20 border border-yellow-400/50 rounded-lg p-4 mb-4">
+                    <p className="text-sm text-yellow-400 flex items-center">
+                      <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                      Important: Vérifiez les températures et l'état des produits à la réception
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Article</label>
+                      <select className="w-full px-4 py-2 bg-white border border-gray-400 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-black/50" required>
+                        <option value="">Sélectionner...</option>
+                        {articles.map(article => (
+                          <option key={article.id} value={article.id}>
+                            {article.nom} ({article.sku})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Fournisseur</label>
+                      <select className="w-full px-4 py-2 bg-white border border-gray-400 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-black/50" required>
+                        <option value="">Sélectionner...</option>
+                        <option value="metro">Metro</option>
+                        <option value="sysco">Sysco</option>
+                        <option value="gfs">GFS</option>
+                        <option value="local">Fournisseur local</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Quantité reçue</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        className="w-full px-4 py-2 bg-white border border-gray-400 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-black/50"
+                        placeholder="0"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">N° de lot</label>
+                      <input
+                        type="text"
+                        className="w-full px-4 py-2 bg-white border border-gray-400 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-black/50"
+                        placeholder="LOT-2024-026"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Date de péremption</label>
+                      <input
+                        type="date"
+                        className="w-full px-4 py-2 bg-white border border-gray-400 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-black/50"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-4 border-t border-gray-700 pt-4">
+                    <h3 className="font-medium text-gray-800">Contrôles HACCP</h3>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Température à la réception (°C)</label>
+                        <input
+                          type="number"
+                          step="0.1"
+                          className="w-full px-4 py-2 bg-white border border-gray-400 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-black/50"
+                          placeholder="Ex: 4.0"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">État du produit</label>
+                        <select className="w-full px-4 py-2 bg-white border border-gray-400 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-black/50" required>
+                          <option value="conforme">Conforme</option>
+                          <option value="non-conforme">Non conforme</option>
+                          <option value="accepte-reserve">Accepté avec réserve</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Notes / Observations</label>
+                      <textarea
+                        className="w-full px-4 py-2 bg-white border border-gray-400 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-black/50"
+                        rows="3"
+                        placeholder="Ex: Emballage légèrement endommagé mais produit intact"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3 pt-4">
+                    <Button type="submit">Valider la réception</Button>
+                    <Button type="button" variant="secondary" onClick={() => setShowReception(false)}>
+                      Annuler
+                    </Button>
+                  </div>
+                </form>
+              </div>
+            </Card>
+          </div>
+        );
+
+        // Vue détaillée d'un article
+        if (selectedArticle) {
+          const article = articles.find(a => a.id === selectedArticle);
+          const articleMouvements = mouvements.filter(m => m.article === article.nom);
+
+          return (
+            <div className="space-y-6 animate-fade-in">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <button
+                    onClick={() => setSelectedArticle(null)}
+                    className="text-gray-600 hover:text-gray-800 transition-colors"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                    </svg>
+                  </button>
+                  <h1 className="text-2xl font-display font-bold text-gray-800">{article.nom}</h1>
+                  <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getStatutColor(article)}`}>
+                    {getStatutBadge(article)}
+                  </span>
+                </div>
+                <div className="flex gap-3">
+                  <Button variant="secondary">Modifier</Button>
+                  <Button>Mouvements de stock</Button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* Informations générales */}
+                <Card className="p-6">
+                  <h3 className="font-display font-semibold text-gray-800 mb-4">Informations générales</h3>
+                  <div className="space-y-3">
+                    <div>
+                      <p className="text-sm text-gray-600">Code SKU</p>
+                      <p className="font-medium text-gray-800">{article.sku}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Emplacement</p>
+                      <p className="font-medium text-gray-800">{article.emplacement}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Unité de mesure</p>
+                      <p className="font-medium text-gray-800">{article.unite}</p>
+                    </div>
+                  </div>
+                </Card>
+
+                {/* Stock et seuils */}
+                <Card className="p-6">
+                  <h3 className="font-display font-semibold text-gray-800 mb-4">Stock</h3>
+                  <div className="space-y-3">
+                    <div>
+                      <p className="text-sm text-gray-600">Stock actuel</p>
+                      <p className="text-2xl font-bold text-gray-800">{article.stock} {article.unite}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Seuil d'alerte</p>
+                      <p className="font-medium text-gray-800">{article.seuil} {article.unite}</p>
+                    </div>
+                    <div className="pt-2">
+                      <div className="w-full bg-gray-700 rounded-full h-2">
+                        <div
+                          className={`h-2 rounded-full ${article.stock <= article.seuil ? 'bg-red-400' : 'bg-green-400'}`}
+                          style={{width: `${Math.min((article.stock / (article.seuil * 2)) * 100, 100)}%`}}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+
+                {/* Traçabilité */}
+                <Card className="p-6">
+                  <h3 className="font-display font-semibold text-gray-800 mb-4">Traçabilité</h3>
+                  <div className="space-y-3">
+                    <div>
+                      <p className="text-sm text-gray-600">Lot actuel</p>
+                      <p className="font-medium text-gray-800">{article.lot}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Date de péremption</p>
+                      <p className="font-medium text-gray-800">{new Date(article.peremption).toLocaleDateString('fr-CA')}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Jours restants</p>
+                      <p className={`font-medium ${Math.floor((new Date(article.peremption) - new Date()) / (1000 * 60 * 60 * 24)) <= 7 ? 'text-orange-400' : 'text-gray-800'}`}>
+                        {Math.floor((new Date(article.peremption) - new Date()) / (1000 * 60 * 60 * 24))} jours
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+              </div>
+
+              {/* Historique des mouvements */}
+              <Card className="overflow-hidden">
+                <div className="p-6 border-b border-gray-700">
+                  <h3 className="font-display font-semibold text-gray-800">Historique des mouvements</h3>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gray-200 border-b border-gray-400">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-sm font-medium text-gray-600">Date</th>
+                        <th className="px-6 py-3 text-left text-sm font-medium text-gray-600">Type</th>
+                        <th className="px-6 py-3 text-right text-sm font-medium text-gray-600">Quantité</th>
+                        <th className="px-6 py-3 text-left text-sm font-medium text-gray-600">Lot</th>
+                        <th className="px-6 py-3 text-left text-sm font-medium text-gray-600">Motif</th>
+                        <th className="px-6 py-3 text-left text-sm font-medium text-gray-600">Responsable</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-700">
+                      {articleMouvements.map((mouvement) => (
+                        <tr key={mouvement.id} className="hover:bg-gray-100 transition-colors">
+                          <td className="px-6 py-4 text-sm text-gray-800">{mouvement.date}</td>
+                          <td className="px-6 py-4">
+                            <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${
+                              mouvement.type === 'Entrée' ? 'bg-green-900/20 text-green-400' :
+                              mouvement.type === 'Sortie' ? 'bg-red-900/20 text-red-400' :
+                              'bg-yellow-900/20 text-yellow-400'
+                            }`}>
+                              {mouvement.type}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-right font-medium text-gray-800">
+                            {mouvement.type === 'Entrée' ? '+' : ''}{mouvement.quantite} {mouvement.unite}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-800">{mouvement.lot}</td>
+                          <td className="px-6 py-4 text-sm text-gray-800">{mouvement.motif}</td>
+                          <td className="px-6 py-4 text-sm text-gray-800">{mouvement.responsable}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </Card>
+            </div>
+          );
+        }
+
+        // Vue principale de l'inventaire
+        return (
+          <div className="space-y-6 animate-fade-in">
+            <div className="flex items-center justify-between">
+              <h1 className="text-2xl font-display font-bold text-gray-800">Gestion de l'inventaire</h1>
+              <div className="flex gap-3">
+                <Button variant="secondary" onClick={() => setShowReception(true)}>
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                  </svg>
+                  Réception
+                </Button>
+                <Button onClick={() => setShowAddArticle(true)}>
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Nouvel article
+                </Button>
+              </div>
+            </div>
+
+            {/* Statistiques */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <Card className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">Articles en stock</p>
+                    <p className="text-2xl font-bold text-gray-800">{articles.length}</p>
+                  </div>
+                  <div className="w-12 h-12 bg-gray-400 rounded-lg flex items-center justify-center">
+                    <span className="text-white">📦</span>
+                  </div>
+                </div>
+              </Card>
+
+              <Card className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">Alertes stock</p>
+                    <p className="text-2xl font-bold text-red-400">{articlesEnAlerte}</p>
+                  </div>
+                  <div className="w-12 h-12 bg-red-900/20 rounded-lg flex items-center justify-center">
+                    <span className="text-red-400">⚠️</span>
+                  </div>
+                </div>
+              </Card>
+
+              <Card className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">Lots expirant</p>
+                    <p className="text-2xl font-bold text-orange-400">{lotsExpirantBientot}</p>
+                    <p className="text-xs text-gray-600">dans 7 jours</p>
+                  </div>
+                  <div className="w-12 h-12 bg-orange-900/20 rounded-lg flex items-center justify-center">
+                    <span className="text-orange-400">📅</span>
+                  </div>
+                </div>
+              </Card>
+
+              <Card className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">Valeur totale</p>
+                    <p className="text-2xl font-bold text-gray-800">{valeurtotale.toFixed(0)} $</p>
+                  </div>
+                  <div className="w-12 h-12 bg-green-900/20 rounded-lg flex items-center justify-center">
+                    <span className="text-green-400">💰</span>
+                  </div>
+                </div>
+              </Card>
+            </div>
+
+            {/* Sous-navigation */}
+            <Card className="p-1">
+              <div className="flex space-x-1">
+                {['articles', 'mouvements', 'commandes'].map(tab => (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveSubTab(tab)}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      activeSubTab === tab
+                        ? 'bg-black text-white'
+                        : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
+                    }`}
+                  >
+                    {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                  </button>
+                ))}
+              </div>
+            </Card>
+
+            {/* Contenu selon l'onglet actif */}
+            {activeSubTab === 'articles' && (
+              <>
+                {/* Filtres */}
+                <Card className="p-4">
+                  <div className="flex flex-wrap gap-4">
+                    <input
+                      type="text"
+                      placeholder="Rechercher un article..."
+                      className="flex-1 min-w-[200px] px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-black"
+                    />
+                    <select className="px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-black">
+                      <option value="">Toutes les catégories</option>
+                      <option value="produits-laitiers">Produits laitiers</option>
+                      <option value="viandes">Viandes et volailles</option>
+                      <option value="legumes">Légumes frais</option>
+                      <option value="fruits">Fruits frais</option>
+                      <option value="sec">Produits secs</option>
+                    </select>
+                    <select className="px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-black">
+                      <option value="">Tous les statuts</option>
+                      <option value="ok">Stock OK</option>
+                      <option value="bas">Stock bas</option>
+                      <option value="expire">Expire bientôt</option>
+                    </select>
+                  </div>
+                </Card>
+
+                {/* Liste des articles */}
+                <Card className="overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-gray-200 border-b border-gray-400">
+                        <tr>
+                          <th className="px-6 py-4 text-left text-sm font-medium text-gray-600">SKU</th>
+                          <th className="px-6 py-4 text-left text-sm font-medium text-gray-600">Nom</th>
+                          <th className="px-6 py-4 text-right text-sm font-medium text-gray-600">Stock</th>
+                          <th className="px-6 py-4 text-right text-sm font-medium text-gray-600">Seuil</th>
+                          <th className="px-6 py-4 text-left text-sm font-medium text-gray-600">Lot</th>
+                          <th className="px-6 py-4 text-left text-sm font-medium text-gray-600">Péremption</th>
+                          <th className="px-6 py-4 text-center text-sm font-medium text-gray-600">Statut</th>
+                          <th className="px-6 py-4 text-center text-sm font-medium text-gray-600">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-700">
+                        {articles.map((article) => (
+                          <tr key={article.id} className="hover:bg-gray-100 transition-colors">
+                            <td className="px-6 py-4 text-gray-800 font-medium">{article.sku}</td>
+                            <td className="px-6 py-4 text-gray-800">{article.nom}</td>
+                            <td className={`px-6 py-4 text-right font-medium ${article.stock <= article.seuil ? 'text-red-400' : 'text-gray-800'}`}>
+                              {article.stock} {article.unite}
+                            </td>
+                            <td className="px-6 py-4 text-right text-gray-800">{article.seuil} {article.unite}</td>
+                            <td className="px-6 py-4 text-gray-800">{article.lot}</td>
+                            <td className="px-6 py-4 text-gray-800">{new Date(article.peremption).toLocaleDateString('fr-CA')}</td>
+                            <td className="px-6 py-4 text-center">
+                              <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${getStatutColor(article)}`}>
+                                {getStatutBadge(article)}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 text-center">
+                              <button
+                                onClick={() => setSelectedArticle(article.id)}
+                                className="text-gray-600 hover:text-gray-800 transition-colors"
+                              >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </Card>
+              </>
+            )}
+
+            {activeSubTab === 'mouvements' && (
+              <>
+                {/* Filtres des mouvements */}
+                <Card className="p-4">
+                  <div className="flex flex-wrap gap-4">
+                    <input
+                      type="date"
+                      defaultValue="2024-02-04"
+                      className="px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-black"
+                    />
+                    <select className="px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-black">
+                      <option value="">Tous les types</option>
+                      <option value="entree">Entrées</option>
+                      <option value="sortie">Sorties</option>
+                      <option value="ajustement">Ajustements</option>
+                    </select>
+                    <select className="px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-black">
+                      <option value="">Tous les articles</option>
+                      {articles.map(article => (
+                        <option key={article.id} value={article.id}>{article.nom}</option>
+                      ))}
+                    </select>
+                    <Button variant="secondary">
+                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      Exporter
+                    </Button>
+                  </div>
+                </Card>
+
+                {/* Liste des mouvements */}
+                <Card className="overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-gray-200 border-b border-gray-400">
+                        <tr>
+                          <th className="px-6 py-4 text-left text-sm font-medium text-gray-600">Date/Heure</th>
+                          <th className="px-6 py-4 text-left text-sm font-medium text-gray-600">Type</th>
+                          <th className="px-6 py-4 text-left text-sm font-medium text-gray-600">Article</th>
+                          <th className="px-6 py-4 text-right text-sm font-medium text-gray-600">Quantité</th>
+                          <th className="px-6 py-4 text-left text-sm font-medium text-gray-600">Lot</th>
+                          <th className="px-6 py-4 text-left text-sm font-medium text-gray-600">Motif</th>
+                          <th className="px-6 py-4 text-left text-sm font-medium text-gray-600">Responsable</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-700">
+                        {mouvements.map((mouvement) => (
+                          <tr key={mouvement.id} className="hover:bg-gray-100 transition-colors">
+                            <td className="px-6 py-4 text-gray-800">{mouvement.date}</td>
+                            <td className="px-6 py-4">
+                              <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${
+                                mouvement.type === 'Entrée' ? 'bg-green-900/20 text-green-400' :
+                                mouvement.type === 'Sortie' ? 'bg-red-900/20 text-red-400' :
+                                'bg-yellow-900/20 text-yellow-400'
+                              }`}>
+                                {mouvement.type}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 text-gray-800">{mouvement.article}</td>
+                            <td className="px-6 py-4 text-right font-medium text-gray-800">
+                              {mouvement.type === 'Entrée' ? '+' : ''}{mouvement.quantite} {mouvement.unite}
+                            </td>
+                            <td className="px-6 py-4 text-gray-800">{mouvement.lot}</td>
+                            <td className="px-6 py-4 text-gray-800">{mouvement.motif}</td>
+                            <td className="px-6 py-4 text-gray-800">{mouvement.responsable}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </Card>
+              </>
+            )}
+
+            {activeSubTab === 'commandes' && (
+              <Card className="p-8 text-center">
+                <svg className="w-16 h-16 mx-auto mb-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                </svg>
+                <h3 className="text-lg font-semibold text-gray-800 mb-2">Commandes fournisseurs</h3>
+                <p className="text-gray-600 mb-4">Gérez vos commandes et réapprovisionnements automatiques</p>
+                <Button>Créer une commande</Button>
+              </Card>
+            )}
+
+            {/* Modals */}
+            {showAddArticle && <AddArticleModal />}
+            {showReception && <ReceptionModal />}
+          </div>
+        );
+      };
+
       // Navigation et menu principal
       const menuItems = [
         { id: 'dashboard', label: 'Tableau de bord', icon: '📊' },
