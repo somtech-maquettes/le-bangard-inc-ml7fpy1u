@@ -219,7 +219,7 @@
 
       // Composant Card élégant - thème clair
       const Card = ({ children, className = "", hover = false }) => (
-        <div className={`bg-white rounded-xl border border-gray-200 shadow-sm ${hover ? 'hover:border-gray-300 transition-all duration-300 hover:shadow-lg' : ''} ${className}`}>
+        <div className={`bg-gray-50 rounded-xl border border-gray-300 shadow-sm ${hover ? 'hover:border-gray-400 transition-all duration-300 hover:shadow-lg' : ''} ${className}`}>
           {children}
         </div>
       );
@@ -380,7 +380,7 @@
                   placeholder="Rechercher..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black/50 focus:border-transparent"
+                  className="px-4 py-2 bg-white border border-gray-400 rounded-lg text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black/50 focus:border-transparent"
                 />
                 <Button onClick={() => { setModalType('client'); setShowModal(true); }}>
                   Nouveau client
@@ -391,7 +391,7 @@
             <Card className="overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-gray-900/50 border-b border-gray-700">
+                  <thead className="bg-gray-300 border-b border-gray-400">
                     <tr>
                       <th className="px-6 py-4 text-left text-sm font-display font-medium text-gray-600">Nom</th>
                       <th className="px-6 py-4 text-left text-sm font-display font-medium text-gray-600">Entreprise</th>
@@ -405,7 +405,7 @@
                       <tr
                         key={client.id}
                         onClick={() => onSelect(client.id)}
-                        className="hover:bg-gray-800/50 cursor-pointer transition-colors animate-fade-in-up"
+                        className="hover:bg-gray-100 cursor-pointer transition-colors animate-fade-in-up"
                         style={{ animationDelay: `${i * 50}ms` }}
                       >
                         <td className="px-6 py-4 text-gray-800 font-body">{client.nom}</td>
@@ -521,7 +521,7 @@
                   <div
                     key={cmd.id}
                     onClick={() => goToSubDetail('client', clientId, 'commande', cmd.id)}
-                    className="p-4 bg-gray-900/30 rounded-lg hover:bg-gray-900/50 cursor-pointer transition-colors"
+                    className="p-4 bg-gray-200 rounded-lg hover:bg-gray-300 cursor-pointer transition-colors"
                   >
                     <div className="flex items-center justify-between">
                       <div>
@@ -557,7 +557,7 @@
 
             <Card className="overflow-hidden">
               <table className="w-full">
-                <thead className="bg-gray-900/50 border-b border-gray-700">
+                <thead className="bg-gray-300 border-b border-gray-400">
                   <tr>
                     <th className="px-6 py-4 text-left text-sm font-display font-medium text-gray-600">Numéro</th>
                     <th className="px-6 py-4 text-left text-sm font-display font-medium text-gray-600">Date</th>
@@ -571,7 +571,7 @@
                     <tr
                       key={cmd.id}
                       onClick={() => onSelect(cmd.id)}
-                      className="hover:bg-gray-800/50 cursor-pointer transition-colors"
+                      className="hover:bg-gray-200 cursor-pointer transition-colors"
                     >
                       <td className="px-6 py-4 font-medium text-gray-800">{cmd.numero}</td>
                       <td className="px-6 py-4 text-gray-800">{cmd.date}</td>
@@ -579,7 +579,7 @@
                         <span className={`px-2 py-1 text-xs rounded-full ${
                           cmd.statut === 'Livrée' ? 'bg-green-900/50 text-green-400' :
                           cmd.statut === 'En préparation' ? 'bg-blue-900/50 text-blue-400' :
-                          cmd.statut === 'Confirmée' ? 'bg-gray-700 text-gray-700' :
+                          cmd.statut === 'Confirmée' ? 'bg-gray-400 text-white' :
                           'bg-yellow-900/50 text-yellow-400'
                         }`}>
                           {cmd.statut}
@@ -653,7 +653,7 @@
             <Card className="p-6">
               <h3 className="font-display font-semibold text-gray-800 mb-4">Articles commandés</h3>
               <div className="space-y-3">
-                <div className="p-4 bg-gray-900/30 rounded-lg">
+                <div className="p-4 bg-gray-200 rounded-lg">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="font-medium text-gray-800">Plateau de sandwichs variés</p>
@@ -662,7 +662,7 @@
                     <p className="font-semibold text-gray-800">195 $</p>
                   </div>
                 </div>
-                <div className="p-4 bg-gray-900/30 rounded-lg">
+                <div className="p-4 bg-gray-200 rounded-lg">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="font-medium text-gray-800">Box à lunch complète</p>
@@ -706,7 +706,7 @@
                   <select
                     value={formData.statut}
                     onChange={(e) => setFormData({...formData, statut: e.target.value})}
-                    className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-black/50"
+                    className="w-full px-4 py-2 bg-white border border-gray-400 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-black/50"
                   >
                     <option value="Confirmée">Confirmée</option>
                     <option value="En préparation">En préparation</option>
@@ -723,7 +723,7 @@
                     type="text"
                     value={formData.livraison}
                     onChange={(e) => setFormData({...formData, livraison: e.target.value})}
-                    className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-black/50"
+                    className="w-full px-4 py-2 bg-white border border-gray-400 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-black/50"
                   />
                 </div>
 
@@ -812,7 +812,7 @@
             {/* Affichage de la prep list */}
             {showPrepList && (
               <Card className="overflow-hidden animate-fade-in">
-                <div className="p-4 border-b border-gray-700 bg-gray-900/50">
+                <div className="p-4 border-b border-gray-400 bg-gray-300">
                   <div className="flex items-center justify-between">
                     <h2 className="font-display font-semibold text-gray-800">Liste de préparation</h2>
                     <div className="flex gap-2">
@@ -824,7 +824,7 @@
                 <div className="p-6">
                   <div className="overflow-x-auto">
                     <table className="w-full">
-                      <thead className="border-b border-gray-700">
+                      <thead className="border-b border-gray-400">
                         <tr>
                           <th className="pb-3 text-left text-sm font-medium text-gray-600">Ingrédient</th>
                           <th className="pb-3 text-left text-sm font-medium text-gray-600">Quantité totale</th>
@@ -834,7 +834,7 @@
                       </thead>
                       <tbody className="divide-y divide-gray-700">
                         {prepList.map((item, idx) => (
-                          <tr key={idx} className="hover:bg-gray-800/50 transition-colors">
+                          <tr key={idx} className="hover:bg-gray-100 transition-colors">
                             <td className="py-3 text-gray-800 font-medium">{item.ingredient}</td>
                             <td className="py-3 text-gray-800">
                               <span className="font-semibold">{item.quantite}</span> {item.unite}
@@ -843,7 +843,7 @@
                             <td className="py-3">
                               <input
                                 type="checkbox"
-                                className="w-4 h-4 rounded border-gray-600 bg-gray-800 text-black focus:ring-black focus:ring-offset-0"
+                                className="w-4 h-4 rounded border-gray-600 bg-gray-200 text-black focus:ring-black focus:ring-offset-0"
                               />
                             </td>
                           </tr>
@@ -852,7 +852,7 @@
                     </table>
                   </div>
 
-                  <div className="mt-6 p-4 bg-gray-800/50 rounded-lg">
+                  <div className="mt-6 p-4 bg-gray-100 rounded-lg">
                     <h3 className="font-medium text-gray-800 mb-2">Notes de production:</h3>
                     <ul className="space-y-1 text-sm text-gray-600">
                       <li>• Préparer le poulet grillé en premier (temps de cuisson: 20 min)</li>
@@ -866,14 +866,14 @@
             )}
 
             <Card className="overflow-hidden">
-              <div className="p-4 border-b border-gray-700">
+              <div className="p-4 border-b border-gray-400">
                 <h2 className="font-display font-semibold text-gray-800">Commandes à produire</h2>
               </div>
               <div className="divide-y divide-gray-700">
                 {commandesJour.map(cmd => {
                   const client = mockData.clients.find(c => c.id === cmd.clientId);
                   return (
-                    <div key={cmd.id} className="p-4 hover:bg-gray-800/50 transition-colors">
+                    <div key={cmd.id} className="p-4 hover:bg-gray-100 transition-colors">
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="font-medium text-gray-800">{cmd.numero}</p>
@@ -884,7 +884,7 @@
                           <span className={`px-2 py-1 text-xs rounded-full ${
                             cmd.statut === 'En production' ? 'bg-blue-900/50 text-blue-400' :
                             cmd.statut === 'En préparation' ? 'bg-yellow-900/50 text-yellow-400' :
-                            'bg-gray-700 text-gray-700'
+                            'bg-gray-400 text-white'
                           }`}>
                             {cmd.statut}
                           </span>
@@ -916,7 +916,7 @@
                   placeholder="Rechercher..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black/50 focus:border-transparent"
+                  className="px-4 py-2 bg-white border border-gray-400 rounded-lg text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black/50 focus:border-transparent"
                 />
                 <Button onClick={() => { setModalType('recette'); setShowModal(true); }}>
                   Nouvelle recette
@@ -927,7 +927,7 @@
             <Card className="overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-gray-900/50 border-b border-gray-700">
+                  <thead className="bg-gray-300 border-b border-gray-400">
                     <tr>
                       <th className="px-6 py-4 text-left text-sm font-display font-medium text-gray-600">Nom</th>
                       <th className="px-6 py-4 text-left text-sm font-display font-medium text-gray-600">Rendement</th>
@@ -942,7 +942,7 @@
                       <tr
                         key={recette.id}
                         onClick={() => onSelect(recette.id)}
-                        className="hover:bg-gray-800/50 cursor-pointer transition-colors animate-fade-in-up"
+                        className="hover:bg-gray-100 cursor-pointer transition-colors animate-fade-in-up"
                         style={{ animationDelay: `${i * 50}ms` }}
                       >
                         <td className="px-6 py-4 text-gray-800 font-body">{recette.nom}</td>
@@ -1076,7 +1076,7 @@
 
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="border-b border-gray-700">
+                  <thead className="border-b border-gray-400">
                     <tr>
                       <th className="pb-3 text-left text-sm font-medium text-gray-600">Ingrédient</th>
                       <th className="pb-3 text-left text-sm font-medium text-gray-600">Quantité</th>
@@ -1111,19 +1111,19 @@
 
               <ol className="space-y-3">
                 <li className="flex gap-3">
-                  <span className="flex-shrink-0 w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center text-sm font-bold text-gray-700">1</span>
+                  <span className="flex-shrink-0 w-8 h-8 bg-gray-400 rounded-full flex items-center justify-center text-sm font-bold text-white">1</span>
                   <p className="text-gray-800 pt-1">Griller le poulet à 180°C pendant 20 minutes jusqu'à ce qu'il soit bien doré.</p>
                 </li>
                 <li className="flex gap-3">
-                  <span className="flex-shrink-0 w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center text-sm font-bold text-gray-700">2</span>
+                  <span className="flex-shrink-0 w-8 h-8 bg-gray-400 rounded-full flex items-center justify-center text-sm font-bold text-white">2</span>
                   <p className="text-gray-800 pt-1">Laisser refroidir et couper en tranches fines.</p>
                 </li>
                 <li className="flex gap-3">
-                  <span className="flex-shrink-0 w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center text-sm font-bold text-gray-700">3</span>
+                  <span className="flex-shrink-0 w-8 h-8 bg-gray-400 rounded-full flex items-center justify-center text-sm font-bold text-white">3</span>
                   <p className="text-gray-800 pt-1">Préparer les légumes : laver la laitue, trancher les tomates.</p>
                 </li>
                 <li className="flex gap-3">
-                  <span className="flex-shrink-0 w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center text-sm font-bold text-gray-700">4</span>
+                  <span className="flex-shrink-0 w-8 h-8 bg-gray-400 rounded-full flex items-center justify-center text-sm font-bold text-white">4</span>
                   <p className="text-gray-800 pt-1">Assembler les sandwichs en étalant la mayonnaise, puis en ajoutant le poulet et les légumes.</p>
                 </li>
               </ol>
@@ -1166,7 +1166,7 @@
                       type="text"
                       value={formData.nom}
                       onChange={(e) => setFormData({...formData, nom: e.target.value})}
-                      className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-black/50"
+                      className="w-full px-4 py-2 bg-white border border-gray-400 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-black/50"
                       placeholder="Ex: Sandwich au poulet grillé"
                     />
                   </div>
@@ -1179,7 +1179,7 @@
                       type="number"
                       value={formData.rendement}
                       onChange={(e) => setFormData({...formData, rendement: e.target.value})}
-                      className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-black/50"
+                      className="w-full px-4 py-2 bg-white border border-gray-400 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-black/50"
                       placeholder="10"
                     />
                   </div>
@@ -1191,7 +1191,7 @@
                     <select
                       value={formData.unite}
                       onChange={(e) => setFormData({...formData, unite: e.target.value})}
-                      className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-black/50"
+                      className="w-full px-4 py-2 bg-white border border-gray-400 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-black/50"
                     >
                       <option value="portions">portions</option>
                       <option value="unités">unités</option>
@@ -1208,7 +1208,7 @@
                       type="number"
                       value={formData.tempsPrepMinutes}
                       onChange={(e) => setFormData({...formData, tempsPrepMinutes: e.target.value})}
-                      className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-black/50"
+                      className="w-full px-4 py-2 bg-white border border-gray-400 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-black/50"
                       placeholder="30"
                     />
                   </div>
@@ -1221,13 +1221,13 @@
                       type="text"
                       value={formData.allergenes}
                       onChange={(e) => setFormData({...formData, allergenes: e.target.value})}
-                      className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-black/50"
+                      className="w-full px-4 py-2 bg-white border border-gray-400 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-black/50"
                       placeholder="Gluten, Œufs, Lait"
                     />
                   </div>
                 </div>
 
-                <div className="flex gap-3 pt-4 border-t border-gray-700">
+                <div className="flex gap-3 pt-4 border-t border-gray-400">
                   <Button type="submit">Enregistrer</Button>
                   <Button type="button" variant="secondary" onClick={onBack}>Annuler</Button>
                 </div>
@@ -1263,7 +1263,7 @@
             </div>
 
             <Card className="overflow-hidden">
-              <div className="p-4 border-b border-gray-700 bg-gray-900/50">
+              <div className="p-4 border-b border-gray-400 bg-gray-300">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-gray-600">Coût total des ingrédients</span>
                   <span className="text-xl font-bold text-gray-800">{coutTotal.toFixed(2)} $</span>
@@ -1272,7 +1272,7 @@
 
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-gray-900/30 border-b border-gray-700">
+                  <thead className="bg-gray-200 border-b border-gray-400">
                     <tr>
                       <th className="px-6 py-4 text-left text-sm font-medium text-gray-600">Ingrédient</th>
                       <th className="px-6 py-4 text-left text-sm font-medium text-gray-600">Quantité</th>
@@ -1283,7 +1283,7 @@
                   </thead>
                   <tbody className="divide-y divide-gray-700">
                     {ingredients.map((ing) => (
-                      <tr key={ing.id} className="hover:bg-gray-800/50 transition-colors">
+                      <tr key={ing.id} className="hover:bg-gray-100 transition-colors">
                         <td className="px-6 py-4 text-gray-800">{ing.nom}</td>
                         <td className="px-6 py-4 text-gray-800">{ing.quantite} {ing.unite}</td>
                         <td className="px-6 py-4 text-gray-800">{(ing.cout / ing.quantite).toFixed(2)} $</td>
@@ -1333,7 +1333,7 @@
             </div>
 
             <Card className="p-6">
-              <div className="mb-4 p-4 bg-gray-900/50 rounded-lg">
+              <div className="mb-4 p-4 bg-gray-300 rounded-lg">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-gray-600">Durée totale de préparation</span>
                   <span className="text-xl font-bold text-gray-800">{dureeTotal} minutes</span>
@@ -1342,7 +1342,7 @@
 
               <div className="space-y-4">
                 {etapes.map((etape) => (
-                  <div key={etape.id} className="flex gap-4 p-4 bg-gray-800/50 rounded-lg hover:bg-gray-800 transition-colors">
+                  <div key={etape.id} className="flex gap-4 p-4 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
                     <div className="flex-shrink-0">
                       <div className="w-10 h-10 bg-black rounded-full flex items-center justify-center">
                         <span className="font-bold text-white">{etape.ordre}</span>
@@ -1498,7 +1498,7 @@
                     {[0, 1, 2, 3].map((index) => (
                       <div
                         key={index}
-                        className="w-16 h-16 bg-gray-800 rounded-lg flex items-center justify-center text-2xl font-bold text-gray-800 border-2 border-gray-700"
+                        className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center text-2xl font-bold text-gray-800 border-2 border-gray-400"
                       >
                         {pin[index] ? '•' : ''}
                       </div>
@@ -1522,14 +1522,14 @@
                       <button
                         key={num}
                         onClick={() => handlePinEntry(num.toString())}
-                        className="h-20 bg-gray-800 hover:bg-gray-700 rounded-xl text-2xl font-bold text-gray-800 transition-all hover:scale-105 active:scale-95"
+                        className="h-20 bg-gray-200 hover:bg-gray-300 rounded-xl text-2xl font-bold text-gray-800 transition-all hover:scale-105 active:scale-95"
                       >
                         {num}
                       </button>
                     ))}
                     <button
                       onClick={clearPin}
-                      className="h-20 bg-gray-800 hover:bg-gray-700 rounded-xl text-gray-600 transition-all hover:scale-105 active:scale-95"
+                      className="h-20 bg-gray-200 hover:bg-gray-300 rounded-xl text-gray-600 transition-all hover:scale-105 active:scale-95"
                     >
                       <svg className="w-8 h-8 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414 6.414a2 2 0 001.414.586H19a2 2 0 002-2V7a2 2 0 00-2-2h-8.172a2 2 0 00-1.414.586L3 12z" />
@@ -1537,13 +1537,13 @@
                     </button>
                     <button
                       onClick={() => handlePinEntry('0')}
-                      className="h-20 bg-gray-800 hover:bg-gray-700 rounded-xl text-2xl font-bold text-gray-800 transition-all hover:scale-105 active:scale-95"
+                      className="h-20 bg-gray-200 hover:bg-gray-300 rounded-xl text-2xl font-bold text-gray-800 transition-all hover:scale-105 active:scale-95"
                     >
                       0
                     </button>
                     <button
                       onClick={clearPin}
-                      className="h-20 bg-gray-800 hover:bg-gray-700 rounded-xl text-gray-600 transition-all hover:scale-105 active:scale-95"
+                      className="h-20 bg-gray-200 hover:bg-gray-300 rounded-xl text-gray-600 transition-all hover:scale-105 active:scale-95"
                     >
                       <svg className="w-8 h-8 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -1573,7 +1573,7 @@
                     </button>
                     <button
                       onClick={clearPin}
-                      className="w-full py-3 bg-gray-800 hover:bg-gray-700 rounded-lg text-gray-600 transition-all"
+                      className="w-full py-3 bg-gray-200 hover:bg-gray-300 rounded-lg text-gray-600 transition-all"
                     >
                       Annuler
                     </button>
@@ -1589,7 +1589,7 @@
                   {employeeStatuses.map((emp) => (
                     <div
                       key={emp.id}
-                      className="p-4 bg-gray-800/50 rounded-lg flex items-center justify-between"
+                      className="p-4 bg-gray-100 rounded-lg flex items-center justify-between"
                     >
                       <div>
                         <p className="font-medium text-gray-800">{emp.nom}</p>
@@ -1597,7 +1597,7 @@
                       </div>
                       <div className="text-right">
                         <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
-                          emp.status === 'Présent' ? 'bg-green-900/50 text-green-400' : 'bg-gray-700 text-gray-600'
+                          emp.status === 'Présent' ? 'bg-green-900/50 text-green-400' : 'bg-gray-400 text-white'
                         }`}>
                           {emp.status}
                         </span>
@@ -1618,7 +1618,7 @@
               <h3 className="text-lg font-display font-semibold text-gray-800 mb-4">Activité récente</h3>
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="border-b border-gray-700">
+                  <thead className="border-b border-gray-400">
                     <tr>
                       <th className="pb-3 text-left text-sm font-medium text-gray-600">Employé</th>
                       <th className="pb-3 text-left text-sm font-medium text-gray-600">Type</th>
@@ -1667,9 +1667,9 @@
       ];
 
       return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-gray-200">
           {/* Header avec logo */}
-          <header className="bg-white border-b border-gray-200 shadow-sm">
+          <header className="bg-gray-100 border-b border-gray-300 shadow-sm">
             <div className="container mx-auto px-4 py-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
@@ -1690,7 +1690,7 @@
 
           <div className="flex">
             {/* Sidebar */}
-            <aside className="hidden lg:block w-64 bg-white border-r border-gray-200 min-h-screen shadow-sm">
+            <aside className="hidden lg:block w-64 bg-gray-100 border-r border-gray-300 min-h-screen shadow-sm">
               <nav className="p-4 space-y-1">
                 {menuItems.map((item) => (
                   <button
@@ -1714,7 +1714,7 @@
             </aside>
 
             {/* Navigation mobile */}
-            <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-50">
+            <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-gray-100 border-t border-gray-300 shadow-lg z-50">
               <div className="grid grid-cols-5 gap-1 p-2">
                 {[menuItems[0], menuItems[2], menuItems[4], menuItems[5], menuItems[9]].map((item) => (
                   <button
@@ -1840,7 +1840,7 @@
                           <label className="block text-sm font-medium text-gray-700 mb-1">Nom</label>
                           <input
                             type="text"
-                            className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-black/50"
+                            className="w-full px-4 py-2 bg-white border border-gray-400 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-black/50"
                             placeholder="Jean Tremblay"
                           />
                         </div>
@@ -1848,7 +1848,7 @@
                           <label className="block text-sm font-medium text-gray-700 mb-1">Entreprise</label>
                           <input
                             type="text"
-                            className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-black/50"
+                            className="w-full px-4 py-2 bg-white border border-gray-400 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-black/50"
                             placeholder="Restaurant ABC"
                           />
                         </div>
@@ -1859,7 +1859,7 @@
                           <label className="block text-sm font-medium text-gray-700 mb-1">Nom de la recette</label>
                           <input
                             type="text"
-                            className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-black/50"
+                            className="w-full px-4 py-2 bg-white border border-gray-400 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-black/50"
                             placeholder="Ex: Plateau de sandwichs variés"
                           />
                         </div>
@@ -1868,13 +1868,13 @@
                             <label className="block text-sm font-medium text-gray-700 mb-1">Rendement</label>
                             <input
                               type="number"
-                              className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-black/50"
+                              className="w-full px-4 py-2 bg-white border border-gray-400 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-black/50"
                               placeholder="10"
                             />
                           </div>
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Unité</label>
-                            <select className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-black/50">
+                            <select className="w-full px-4 py-2 bg-white border border-gray-400 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-black/50">
                               <option value="portions">portions</option>
                               <option value="unités">unités</option>
                               <option value="litres">litres</option>
@@ -1884,7 +1884,7 @@
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">Catégorie</label>
-                          <select className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-black/50">
+                          <select className="w-full px-4 py-2 bg-white border border-gray-400 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-black/50">
                             <option value="">Sélectionner une catégorie</option>
                             <option value="Sandwichs">Sandwichs</option>
                             <option value="Salades">Salades</option>
