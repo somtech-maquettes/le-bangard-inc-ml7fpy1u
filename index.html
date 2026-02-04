@@ -739,15 +739,36 @@
 
       // Composant Production
       const Production = () => {
+        const [showPrepList, setShowPrepList] = React.useState(false);
         const commandesJour = mockData.commandes.filter(c =>
           c.livraison.includes('2024-02-04') || c.livraison.includes('2024-02-05')
         );
+
+        // Générer la prep list en agrégeant les ingrédients nécessaires
+        const generatePrepList = () => {
+          // Simuler une prep list basée sur les commandes du jour
+          const prepItems = [
+            { ingredient: "Poulet grillé", quantite: 8, unite: "kg", commandes: 3 },
+            { ingredient: "Pain", quantite: 80, unite: "tranches", commandes: 3 },
+            { ingredient: "Laitue", quantite: 4, unite: "kg", commandes: 3 },
+            { ingredient: "Tomates", quantite: 2, unite: "kg", commandes: 3 },
+            { ingredient: "Mayonnaise", quantite: 1, unite: "litre", commandes: 3 },
+            { ingredient: "Wrap tortilla", quantite: 60, unite: "unités", commandes: 2 },
+            { ingredient: "Fromage", quantite: 3, unite: "kg", commandes: 2 },
+            { ingredient: "Fruits frais variés", quantite: 10, unite: "kg", commandes: 1 }
+          ];
+          return prepItems;
+        };
+
+        const prepList = generatePrepList();
 
         return (
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <h1 className="text-2xl font-display font-bold text-gray-100">Production du jour</h1>
-              <Button>Générer prep list</Button>
+              <Button onClick={() => setShowPrepList(!showPrepList)}>
+                {showPrepList ? 'Masquer prep list' : 'Générer prep list'}
+              </Button>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -787,6 +808,62 @@
                 </div>
               </Card>
             </div>
+
+            {/* Affichage de la prep list */}
+            {showPrepList && (
+              <Card className="overflow-hidden animate-fade-in">
+                <div className="p-4 border-b border-gray-700 bg-gray-900/50">
+                  <div className="flex items-center justify-between">
+                    <h2 className="font-display font-semibold text-gray-100">Liste de préparation</h2>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="secondary">Imprimer</Button>
+                      <Button size="sm" variant="secondary">Exporter PDF</Button>
+                    </div>
+                  </div>
+                </div>
+                <div className="p-6">
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="border-b border-gray-700">
+                        <tr>
+                          <th className="pb-3 text-left text-sm font-medium text-gray-400">Ingrédient</th>
+                          <th className="pb-3 text-left text-sm font-medium text-gray-400">Quantité totale</th>
+                          <th className="pb-3 text-left text-sm font-medium text-gray-400">Nombre de commandes</th>
+                          <th className="pb-3 text-left text-sm font-medium text-gray-400">Statut</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-700">
+                        {prepList.map((item, idx) => (
+                          <tr key={idx} className="hover:bg-gray-800/50 transition-colors">
+                            <td className="py-3 text-gray-100 font-medium">{item.ingredient}</td>
+                            <td className="py-3 text-gray-100">
+                              <span className="font-semibold">{item.quantite}</span> {item.unite}
+                            </td>
+                            <td className="py-3 text-gray-100">{item.commandes} commandes</td>
+                            <td className="py-3">
+                              <input
+                                type="checkbox"
+                                className="w-4 h-4 rounded border-gray-600 bg-gray-800 text-black focus:ring-black focus:ring-offset-0"
+                              />
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div className="mt-6 p-4 bg-gray-800/50 rounded-lg">
+                    <h3 className="font-medium text-gray-100 mb-2">Notes de production:</h3>
+                    <ul className="space-y-1 text-sm text-gray-400">
+                      <li>• Préparer le poulet grillé en premier (temps de cuisson: 20 min)</li>
+                      <li>• Laver et préparer tous les légumes frais</li>
+                      <li>• Assembler les plateaux de fruits en dernier pour la fraîcheur</li>
+                      <li>• Vérifier les allergènes pour chaque commande</li>
+                    </ul>
+                  </div>
+                </div>
+              </Card>
+            )}
 
             <Card className="overflow-hidden">
               <div className="p-4 border-b border-gray-700">
@@ -1299,6 +1376,282 @@
         );
       };
 
+      // Composant Punch pour check-in/check-out des employés
+      const Punch = () => {
+        const [pin, setPin] = React.useState('');
+        const [message, setMessage] = React.useState('');
+        const [messageType, setMessageType] = React.useState(''); // 'success', 'error'
+        const [currentEmployee, setCurrentEmployee] = React.useState(null);
+        const [punchHistory, setPunchHistory] = React.useState(() => {
+          // Récupérer l'historique depuis localStorage
+          const saved = localStorage.getItem('punchHistory');
+          return saved ? JSON.parse(saved) : [];
+        });
+
+        // Données mockées des employés avec leurs PINs
+        const employees = [
+          { id: 1, nom: "Martin Leblanc", pin: "1234", role: "Chef cuisinier" },
+          { id: 2, nom: "Julie Tremblay", pin: "5678", role: "Aide-cuisinière" },
+          { id: 3, nom: "François Gagnon", pin: "9012", role: "Livreur" },
+          { id: 4, nom: "Sophie Roy", pin: "3456", role: "Service traiteur" },
+          { id: 5, nom: "Alexandre Dubois", pin: "7890", role: "Préparation" }
+        ];
+
+        // Fonction pour gérer l'entrée du PIN
+        const handlePinEntry = (digit) => {
+          if (pin.length < 4) {
+            const newPin = pin + digit;
+            setPin(newPin);
+
+            // Vérifier automatiquement le PIN quand on atteint 4 chiffres
+            if (newPin.length === 4) {
+              const employee = employees.find(emp => emp.pin === newPin);
+              if (employee) {
+                setCurrentEmployee(employee);
+                setMessage('');
+                setMessageType('');
+              } else {
+                setMessage('PIN invalide');
+                setMessageType('error');
+                setTimeout(() => {
+                  setPin('');
+                  setMessage('');
+                }, 1500);
+              }
+            }
+          }
+        };
+
+        // Fonction pour effacer le PIN
+        const clearPin = () => {
+          setPin('');
+          setCurrentEmployee(null);
+          setMessage('');
+          setMessageType('');
+        };
+
+        // Fonction pour gérer le punch (check-in ou check-out)
+        const handlePunch = (type) => {
+          if (!currentEmployee) return;
+
+          const now = new Date();
+          const punch = {
+            id: Date.now(),
+            employeeId: currentEmployee.id,
+            employeeName: currentEmployee.nom,
+            type: type,
+            timestamp: now.toISOString(),
+            date: now.toLocaleDateString('fr-CA'),
+            time: now.toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit' })
+          };
+
+          // Ajouter à l'historique
+          const newHistory = [punch, ...punchHistory];
+          setPunchHistory(newHistory);
+          localStorage.setItem('punchHistory', JSON.stringify(newHistory));
+
+          // Afficher le message de confirmation
+          setMessage(`${type === 'in' ? 'Check-in' : 'Check-out'} enregistré pour ${currentEmployee.nom}`);
+          setMessageType('success');
+
+          // Réinitialiser après 2 secondes
+          setTimeout(() => {
+            clearPin();
+          }, 2000);
+        };
+
+        // Obtenir les punches du jour
+        const today = new Date().toLocaleDateString('fr-CA');
+        const todayPunches = punchHistory.filter(p => p.date === today);
+
+        // Calculer le statut de chaque employé
+        const employeeStatuses = employees.map(emp => {
+          const empPunches = todayPunches.filter(p => p.employeeId === emp.id);
+          const lastPunch = empPunches[0];
+          return {
+            ...emp,
+            status: lastPunch ? (lastPunch.type === 'in' ? 'Présent' : 'Absent') : 'Absent',
+            lastPunchTime: lastPunch ? lastPunch.time : null,
+            lastPunchType: lastPunch ? lastPunch.type : null
+          };
+        });
+
+        return (
+          <div className="max-w-6xl mx-auto space-y-8">
+            <div className="flex items-center justify-between">
+              <h1 className="text-3xl font-display font-bold text-gray-100">Système de punch</h1>
+              <div className="text-sm text-gray-400">
+                {new Date().toLocaleDateString('fr-CA')} • {new Date().toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit' })}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Panneau de punch */}
+              <Card className="p-8">
+                <h2 className="text-xl font-display font-semibold text-gray-100 mb-6 text-center">
+                  {currentEmployee ? `Bienvenue, ${currentEmployee.nom}` : 'Entrez votre PIN'}
+                </h2>
+
+                {/* Affichage du PIN */}
+                <div className="flex justify-center mb-8">
+                  <div className="flex gap-3">
+                    {[0, 1, 2, 3].map((index) => (
+                      <div
+                        key={index}
+                        className="w-16 h-16 bg-gray-800 rounded-lg flex items-center justify-center text-2xl font-bold text-gray-100 border-2 border-gray-700"
+                      >
+                        {pin[index] ? '•' : ''}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Message de feedback */}
+                {message && (
+                  <div className={`mb-6 p-4 rounded-lg text-center animate-fade-in ${
+                    messageType === 'success' ? 'bg-green-900/50 text-green-400' : 'bg-red-900/50 text-red-400'
+                  }`}>
+                    {message}
+                  </div>
+                )}
+
+                {!currentEmployee ? (
+                  /* Clavier numérique */
+                  <div className="grid grid-cols-3 gap-4 max-w-xs mx-auto">
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
+                      <button
+                        key={num}
+                        onClick={() => handlePinEntry(num.toString())}
+                        className="h-20 bg-gray-800 hover:bg-gray-700 rounded-xl text-2xl font-bold text-gray-100 transition-all hover:scale-105 active:scale-95"
+                      >
+                        {num}
+                      </button>
+                    ))}
+                    <button
+                      onClick={clearPin}
+                      className="h-20 bg-gray-800 hover:bg-gray-700 rounded-xl text-gray-400 transition-all hover:scale-105 active:scale-95"
+                    >
+                      <svg className="w-8 h-8 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414 6.414a2 2 0 001.414.586H19a2 2 0 002-2V7a2 2 0 00-2-2h-8.172a2 2 0 00-1.414.586L3 12z" />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={() => handlePinEntry('0')}
+                      className="h-20 bg-gray-800 hover:bg-gray-700 rounded-xl text-2xl font-bold text-gray-100 transition-all hover:scale-105 active:scale-95"
+                    >
+                      0
+                    </button>
+                    <button
+                      onClick={clearPin}
+                      className="h-20 bg-gray-800 hover:bg-gray-700 rounded-xl text-gray-400 transition-all hover:scale-105 active:scale-95"
+                    >
+                      <svg className="w-8 h-8 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                ) : (
+                  /* Boutons Check-in/Check-out */
+                  <div className="space-y-4">
+                    <button
+                      onClick={() => handlePunch('in')}
+                      className="w-full h-32 bg-green-700 hover:bg-green-600 rounded-xl text-3xl font-bold text-white transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-4"
+                    >
+                      <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 9l3 3m0 0l-3 3m3-3H8m13 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      CHECK-IN
+                    </button>
+                    <button
+                      onClick={() => handlePunch('out')}
+                      className="w-full h-32 bg-red-700 hover:bg-red-600 rounded-xl text-3xl font-bold text-white transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-4"
+                    >
+                      <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M11 15l-3-3m0 0l3-3m-3 3h8M3 12a9 9 0 1118 0 9 9 0 01-18 0z" />
+                      </svg>
+                      CHECK-OUT
+                    </button>
+                    <button
+                      onClick={clearPin}
+                      className="w-full py-3 bg-gray-800 hover:bg-gray-700 rounded-lg text-gray-400 transition-all"
+                    >
+                      Annuler
+                    </button>
+                  </div>
+                )}
+              </Card>
+
+              {/* Panneau de statut des employés */}
+              <Card className="p-8">
+                <h2 className="text-xl font-display font-semibold text-gray-100 mb-6">Présences du jour</h2>
+
+                <div className="space-y-3">
+                  {employeeStatuses.map((emp) => (
+                    <div
+                      key={emp.id}
+                      className="p-4 bg-gray-800/50 rounded-lg flex items-center justify-between"
+                    >
+                      <div>
+                        <p className="font-medium text-gray-100">{emp.nom}</p>
+                        <p className="text-sm text-gray-400">{emp.role}</p>
+                      </div>
+                      <div className="text-right">
+                        <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
+                          emp.status === 'Présent' ? 'bg-green-900/50 text-green-400' : 'bg-gray-700 text-gray-400'
+                        }`}>
+                          {emp.status}
+                        </span>
+                        {emp.lastPunchTime && (
+                          <p className="text-xs text-gray-500 mt-1">
+                            {emp.lastPunchType === 'in' ? 'Arrivée' : 'Départ'}: {emp.lastPunchTime}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            </div>
+
+            {/* Historique des punches récents */}
+            <Card className="p-6">
+              <h3 className="text-lg font-display font-semibold text-gray-100 mb-4">Activité récente</h3>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="border-b border-gray-700">
+                    <tr>
+                      <th className="pb-3 text-left text-sm font-medium text-gray-400">Employé</th>
+                      <th className="pb-3 text-left text-sm font-medium text-gray-400">Type</th>
+                      <th className="pb-3 text-left text-sm font-medium text-gray-400">Date</th>
+                      <th className="pb-3 text-left text-sm font-medium text-gray-400">Heure</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-700">
+                    {todayPunches.slice(0, 10).map((punch) => (
+                      <tr key={punch.id} className="animate-fade-in">
+                        <td className="py-3 text-gray-100">{punch.employeeName}</td>
+                        <td className="py-3">
+                          <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
+                            punch.type === 'in' ? 'bg-green-900/50 text-green-400' : 'bg-red-900/50 text-red-400'
+                          }`}>
+                            {punch.type === 'in' ? 'Check-in' : 'Check-out'}
+                          </span>
+                        </td>
+                        <td className="py-3 text-gray-100">{punch.date}</td>
+                        <td className="py-3 text-gray-100">{punch.time}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {todayPunches.length === 0 && (
+                  <p className="text-center text-gray-500 py-8">Aucune activité aujourd'hui</p>
+                )}
+              </div>
+            </Card>
+          </div>
+        );
+      };
+
       // Navigation et menu principal
       const menuItems = [
         { id: 'dashboard', label: 'Tableau de bord', icon: '📊' },
@@ -1309,7 +1662,8 @@
         { id: 'recettes', label: 'Recettes', icon: '📝' },
         { id: 'inventaire', label: 'Inventaire', icon: '📦' },
         { id: 'factures', label: 'Facturation', icon: '💰' },
-        { id: 'rapports', label: 'Rapports', icon: '📈' }
+        { id: 'rapports', label: 'Rapports', icon: '📈' },
+        { id: 'punch', label: 'Punch', icon: '⏰' }
       ];
 
       return (
@@ -1362,7 +1716,7 @@
             {/* Navigation mobile */}
             <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-gray-800 border-t border-gray-700 z-50">
               <div className="grid grid-cols-5 gap-1 p-2">
-                {menuItems.slice(0, 5).map((item) => (
+                {[menuItems[0], menuItems[2], menuItems[4], menuItems[5], menuItems[9]].map((item) => (
                   <button
                     key={item.id}
                     onClick={() => {
@@ -1455,6 +1809,8 @@
                     )}
                   </>
                 )}
+
+                {activeTab === 'punch' && <Punch />}
 
                 {/* Autres onglets à implémenter */}
                 {['demandes', 'soumissions', 'inventaire', 'factures', 'rapports'].includes(activeTab) && (
