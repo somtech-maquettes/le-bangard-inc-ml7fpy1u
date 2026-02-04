@@ -1283,6 +1283,153 @@
         );
       };
 
+      // Composant Édition Client
+      const ClientEdit = ({ clientId, onBack }) => {
+        const client = mockData.clients.find(c => c.id === clientId);
+        const [formData, setFormData] = React.useState({
+          nom: client?.nom || '',
+          entreprise: client?.entreprise || '',
+          email: client?.email || '',
+          telephone: client?.telephone || '',
+          type: client?.type || 'B2B',
+          credit: client?.credit || '',
+          balance: client?.balance || 0
+        });
+
+        return (
+          <div className="space-y-6">
+            <BackButton onClick={onBack} label="Retour au client" />
+
+            <h1 className="text-2xl font-display font-bold text-gray-800">
+              {clientId ? `Modifier ${client?.nom}` : 'Nouveau client'}
+            </h1>
+
+            <Card className="p-6">
+              <form className="space-y-6" onSubmit={(e) => {
+                e.preventDefault();
+                // Simuler la sauvegarde
+                alert('Client modifié avec succès!');
+                onBack();
+              }}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Nom complet
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.nom}
+                      onChange={(e) => setFormData({...formData, nom: e.target.value})}
+                      className="w-full px-4 py-2 bg-white border border-gray-400 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-black/50"
+                      placeholder="Ex: Jean Tremblay"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Entreprise
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.entreprise}
+                      onChange={(e) => setFormData({...formData, entreprise: e.target.value})}
+                      className="w-full px-4 py-2 bg-white border border-gray-400 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-black/50"
+                      placeholder="Ex: Restaurant Chez Marcel"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => setFormData({...formData, email: e.target.value})}
+                      className="w-full px-4 py-2 bg-white border border-gray-400 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-black/50"
+                      placeholder="Ex: jean@chezmarcel.ca"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Téléphone
+                    </label>
+                    <input
+                      type="tel"
+                      value={formData.telephone}
+                      onChange={(e) => setFormData({...formData, telephone: e.target.value})}
+                      className="w-full px-4 py-2 bg-white border border-gray-400 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-black/50"
+                      placeholder="Ex: (514) 555-1234"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Type de client
+                    </label>
+                    <select
+                      value={formData.type}
+                      onChange={(e) => setFormData({...formData, type: e.target.value})}
+                      className="w-full px-4 py-2 bg-white border border-gray-400 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-black/50"
+                    >
+                      <option value="B2B">B2B</option>
+                      <option value="B2C">B2C</option>
+                      <option value="VIP">VIP</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Limite de crédit
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.credit}
+                      onChange={(e) => setFormData({...formData, credit: e.target.value})}
+                      className="w-full px-4 py-2 bg-white border border-gray-400 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-black/50"
+                      placeholder="Ex: 10000"
+                      min="0"
+                      step="100"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Balance actuelle
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.balance}
+                      onChange={(e) => setFormData({...formData, balance: e.target.value})}
+                      className="w-full px-4 py-2 bg-white border border-gray-400 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-black/50"
+                      placeholder="0"
+                      min="0"
+                      step="0.01"
+                      disabled
+                    />
+                    <p className="text-sm text-gray-500 mt-1">La balance est calculée automatiquement</p>
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-3 pt-6 border-t border-gray-400">
+                  <Button type="button" variant="ghost" onClick={onBack}>
+                    Annuler
+                  </Button>
+                  <Button type="submit">
+                    Enregistrer les modifications
+                  </Button>
+                </div>
+              </form>
+            </Card>
+          </div>
+        );
+      };
+
       // Composant Liste des Commandes d'un client (Niveau 3)
       const CommandesList = ({ clientId, onBack, onSelect }) => {
         const client = mockData.clients.find(c => c.id === clientId);
@@ -3745,6 +3892,12 @@
                       <ClientDetail
                         clientId={view.entityId}
                         onBack={() => goToList('client')}
+                      />
+                    )}
+                    {view.screen === 'edit' && view.entityType === 'client' && (
+                      <ClientEdit
+                        clientId={view.entityId}
+                        onBack={() => view.entityId ? goToDetail('client', view.entityId) : goToList('client')}
                       />
                     )}
                     {view.screen === 'sublist' && view.subEntityType === 'commande' && (
