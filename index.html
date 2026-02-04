@@ -1476,6 +1476,14 @@
           };
         });
 
+        // Fonction pour vérifier si l'employé actuel a un shift en cours
+        const hasActiveShift = () => {
+          if (!currentEmployee) return false;
+          const empPunches = todayPunches.filter(p => p.employeeId === currentEmployee.id);
+          const lastPunch = empPunches[0];
+          return lastPunch && lastPunch.type === 'in';
+        };
+
         return (
           <div className="max-w-6xl mx-auto space-y-8">
             <div className="flex items-center justify-between">
@@ -1553,24 +1561,45 @@
                 ) : (
                   /* Boutons Check-in/Check-out */
                   <div className="space-y-4">
-                    <button
-                      onClick={() => handlePunch('in')}
-                      className="w-full h-32 bg-green-700 hover:bg-green-600 rounded-xl text-3xl font-bold text-white transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-4"
-                    >
-                      <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 9l3 3m0 0l-3 3m3-3H8m13 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      CHECK-IN
-                    </button>
-                    <button
-                      onClick={() => handlePunch('out')}
-                      className="w-full h-32 bg-red-700 hover:bg-red-600 rounded-xl text-3xl font-bold text-white transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-4"
-                    >
-                      <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M11 15l-3-3m0 0l3-3m-3 3h8M3 12a9 9 0 1118 0 9 9 0 01-18 0z" />
-                      </svg>
-                      CHECK-OUT
-                    </button>
+                    {hasActiveShift() ? (
+                      /* Si shift en cours, afficher seulement le bouton CHECK-OUT */
+                      <>
+                        <button
+                          onClick={() => handlePunch('out')}
+                          className="w-full h-32 bg-red-700 hover:bg-red-600 rounded-xl text-3xl font-bold text-white transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-4"
+                        >
+                          <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M11 15l-3-3m0 0l3-3m-3 3h8M3 12a9 9 0 1118 0 9 9 0 01-18 0z" />
+                          </svg>
+                          CHECK-OUT
+                        </button>
+                        <p className="text-center text-sm text-gray-600 mt-2">
+                          Shift en cours depuis {todayPunches.find(p => p.employeeId === currentEmployee.id && p.type === 'in')?.time}
+                        </p>
+                      </>
+                    ) : (
+                      /* Si pas de shift en cours, afficher les deux boutons */
+                      <>
+                        <button
+                          onClick={() => handlePunch('in')}
+                          className="w-full h-32 bg-green-700 hover:bg-green-600 rounded-xl text-3xl font-bold text-white transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-4"
+                        >
+                          <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 9l3 3m0 0l-3 3m3-3H8m13 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          CHECK-IN
+                        </button>
+                        <button
+                          onClick={() => handlePunch('out')}
+                          className="w-full h-32 bg-red-700 hover:bg-red-600 rounded-xl text-3xl font-bold text-white transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-4"
+                        >
+                          <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M11 15l-3-3m0 0l3-3m-3 3h8M3 12a9 9 0 1118 0 9 9 0 01-18 0z" />
+                          </svg>
+                          CHECK-OUT
+                        </button>
+                      </>
+                    )}
                     <button
                       onClick={clearPin}
                       className="w-full py-3 bg-gray-200 hover:bg-gray-300 rounded-lg text-gray-600 transition-all"
@@ -2110,21 +2139,26 @@
       return (
         <div className="min-h-screen bg-gray-200">
           {/* Header avec logo */}
-          <header className="bg-gray-100 border-b border-gray-300 shadow-sm">
-            <div className="container mx-auto px-4 py-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <img
-                    src="https://lebangard.com/favicon-192x192.png"
-                    alt="Le Bangard Inc."
-                    className="h-10 w-10"
-                    onError={(e) => { e.target.src = "https://lebangard.com/favicon-180x180.png"; }}
-                  />
-                  <h1 className="text-xl font-display font-bold text-gray-900">Le Bangard Inc.</h1>
-                </div>
-                <div className="flex items-center gap-4">
-                  <span className="text-sm text-gray-600">Gestion Traiteur</span>
-                </div>
+          <header className="bg-gray-100 border-b border-gray-300 shadow-sm relative">
+            <div className="flex items-center justify-between py-2">
+              {/* Logo dans le coin gauche */}
+              <div className="absolute left-2 top-2">
+                <img
+                  src="https://lebangard.com/favicon-192x192.png"
+                  alt="Le Bangard Inc."
+                  className="h-12 w-12"
+                  onError={(e) => { e.target.src = "https://lebangard.com/favicon-180x180.png"; }}
+                />
+              </div>
+
+              {/* Titre centré */}
+              <div className="flex-1 text-center">
+                <h1 className="text-xl font-display font-bold text-gray-900 mt-1">Le Bangard Inc.</h1>
+              </div>
+
+              {/* Info à droite */}
+              <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                <span className="text-sm text-gray-600">Gestion Traiteur</span>
               </div>
             </div>
           </header>
