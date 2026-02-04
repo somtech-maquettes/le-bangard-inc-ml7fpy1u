@@ -1652,6 +1652,447 @@
         );
       };
 
+      // Composant Facturation
+      const Facturation = () => {
+        const [selectedClientId, setSelectedClientId] = React.useState(null);
+        const [showCreateFacture, setShowCreateFacture] = React.useState(false);
+        const [selectedFacture, setSelectedFacture] = React.useState(null);
+        const [factures, setFactures] = React.useState([
+          {
+            id: 1,
+            numero: "FAC-2024-001",
+            clientId: 1,
+            date: "2024-02-01",
+            echeance: "2024-03-01",
+            montantHT: 3200.00,
+            taxes: 478.40,
+            montantTotal: 3678.40,
+            statut: "Payée",
+            commandes: ["CMD-2024-003"],
+            paiements: [{ date: "2024-02-15", montant: 3678.40, methode: "Virement" }]
+          },
+          {
+            id: 2,
+            numero: "FAC-2024-002",
+            clientId: 1,
+            date: "2024-02-05",
+            echeance: "2024-03-05",
+            montantHT: 2450.00,
+            taxes: 366.38,
+            montantTotal: 2816.38,
+            statut: "En attente",
+            commandes: ["CMD-2024-001"],
+            paiements: []
+          },
+          {
+            id: 3,
+            numero: "FAC-2024-003",
+            clientId: 3,
+            date: "2024-01-28",
+            echeance: "2024-02-28",
+            montantHT: 5600.00,
+            taxes: 837.20,
+            montantTotal: 6437.20,
+            statut: "En retard",
+            commandes: ["CMD-2024-004"],
+            paiements: []
+          },
+          {
+            id: 4,
+            numero: "FAC-2024-004",
+            clientId: 2,
+            date: "2024-02-03",
+            echeance: "2024-03-03",
+            montantHT: 1890.00,
+            taxes: 282.56,
+            montantTotal: 2172.56,
+            statut: "Envoyée",
+            commandes: ["CMD-2024-002"],
+            paiements: []
+          }
+        ]);
+
+        const getClientName = (clientId) => {
+          const client = mockData.clients.find(c => c.id === clientId);
+          return client ? client.entreprise : 'Client inconnu';
+        };
+
+        const getStatutColor = (statut) => {
+          switch (statut) {
+            case 'Payée': return 'text-green-400 bg-green-900/50';
+            case 'En attente': return 'text-yellow-400 bg-yellow-900/50';
+            case 'En retard': return 'text-red-400 bg-red-900/50';
+            case 'Envoyée': return 'text-blue-400 bg-blue-900/50';
+            default: return 'text-gray-400 bg-gray-400';
+          }
+        };
+
+        const calculateTotals = () => {
+          const total = factures.reduce((sum, f) => sum + f.montantTotal, 0);
+          const enAttente = factures.filter(f => f.statut === 'En attente' || f.statut === 'Envoyée')
+            .reduce((sum, f) => sum + f.montantTotal, 0);
+          const enRetard = factures.filter(f => f.statut === 'En retard')
+            .reduce((sum, f) => sum + f.montantTotal, 0);
+          const payees = factures.filter(f => f.statut === 'Payée')
+            .reduce((sum, f) => sum + f.montantTotal, 0);
+
+          return { total, enAttente, enRetard, payees };
+        };
+
+        const totals = calculateTotals();
+
+        // Vue détaillée d'une facture
+        if (selectedFacture) {
+          const facture = factures.find(f => f.id === selectedFacture);
+          const client = mockData.clients.find(c => c.id === facture.clientId);
+          const commandes = mockData.commandes.filter(c => facture.commandes.includes(c.numero));
+
+          return (
+            <div className="space-y-6">
+              <BackButton onClick={() => setSelectedFacture(null)} label="Retour aux factures" />
+
+              <div className="flex items-start justify-between">
+                <div>
+                  <h1 className="text-2xl font-display font-bold text-gray-800">
+                    Facture {facture.numero}
+                  </h1>
+                  <p className="text-gray-600">{client.entreprise}</p>
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="secondary">
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Télécharger PDF
+                  </Button>
+                  <Button>Envoyer par courriel</Button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Informations de la facture */}
+                <Card className="p-6 lg:col-span-2">
+                  <h3 className="font-display font-semibold text-gray-800 mb-4">Détails de la facture</h3>
+
+                  <div className="grid grid-cols-2 gap-6 mb-6">
+                    <div>
+                      <p className="text-sm text-gray-600">Date de facturation</p>
+                      <p className="font-medium text-gray-800">{facture.date}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Date d'échéance</p>
+                      <p className="font-medium text-gray-800">{facture.echeance}</p>
+                    </div>
+                  </div>
+
+                  <div className="border-t border-gray-300 pt-6">
+                    <h4 className="font-medium text-gray-800 mb-4">Commandes facturées</h4>
+                    <div className="space-y-3">
+                      {commandes.map(commande => (
+                        <div key={commande.id} className="p-4 bg-gray-100 rounded-lg">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="font-medium text-gray-800">{commande.numero}</p>
+                              <p className="text-sm text-gray-600">
+                                {commande.items} articles - Livraison: {commande.livraison}
+                              </p>
+                            </div>
+                            <p className="font-medium text-gray-800">{commande.montant.toFixed(2)} $</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="border-t border-gray-300 pt-6 mt-6">
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <p className="text-gray-600">Sous-total HT</p>
+                        <p className="font-medium text-gray-800">{facture.montantHT.toFixed(2)} $</p>
+                      </div>
+                      <div className="flex justify-between">
+                        <p className="text-gray-600">Taxes (TPS/TVQ)</p>
+                        <p className="font-medium text-gray-800">{facture.taxes.toFixed(2)} $</p>
+                      </div>
+                      <div className="flex justify-between pt-2 border-t border-gray-300">
+                        <p className="font-semibold text-gray-800">Total</p>
+                        <p className="text-xl font-bold text-gray-800">{facture.montantTotal.toFixed(2)} $</p>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+
+                {/* Statut et paiements */}
+                <div className="space-y-6">
+                  <Card className="p-6">
+                    <h3 className="font-display font-semibold text-gray-800 mb-4">Statut</h3>
+                    <div className="text-center">
+                      <span className={`inline-block px-4 py-2 rounded-full text-sm font-medium ${getStatutColor(facture.statut)}`}>
+                        {facture.statut}
+                      </span>
+                      {facture.statut === 'En retard' && (
+                        <p className="mt-3 text-sm text-red-400">
+                          En retard de {Math.floor((new Date() - new Date(facture.echeance)) / (1000 * 60 * 60 * 24))} jours
+                        </p>
+                      )}
+                    </div>
+                  </Card>
+
+                  <Card className="p-6">
+                    <h3 className="font-display font-semibold text-gray-800 mb-4">Informations client</h3>
+                    <div className="space-y-3">
+                      <div>
+                        <p className="text-sm text-gray-600">Entreprise</p>
+                        <p className="font-medium text-gray-800">{client.entreprise}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Contact</p>
+                        <p className="font-medium text-gray-800">{client.nom}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Courriel</p>
+                        <p className="font-medium text-gray-800">{client.email}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Limite de crédit</p>
+                        <p className="font-medium text-gray-800">{client.credit.toFixed(2)} $</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Solde dû</p>
+                        <p className="font-medium text-red-400">{client.balance.toFixed(2)} $</p>
+                      </div>
+                    </div>
+                  </Card>
+
+                  {facture.paiements.length > 0 && (
+                    <Card className="p-6">
+                      <h3 className="font-display font-semibold text-gray-800 mb-4">Paiements reçus</h3>
+                      <div className="space-y-3">
+                        {facture.paiements.map((paiement, index) => (
+                          <div key={index} className="p-3 bg-gray-100 rounded">
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <p className="text-sm text-gray-600">{paiement.date}</p>
+                                <p className="text-xs text-gray-500">{paiement.methode}</p>
+                              </div>
+                              <p className="font-medium text-gray-800">{paiement.montant.toFixed(2)} $</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </Card>
+                  )}
+
+                  {facture.statut !== 'Payée' && (
+                    <Button className="w-full">Enregistrer un paiement</Button>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        }
+
+        // Formulaire de création de facture
+        if (showCreateFacture) {
+          const commandesNonFacturees = mockData.commandes.filter(c =>
+            c.statut === 'Livrée' && !factures.some(f => f.commandes.includes(c.numero))
+          );
+
+          return (
+            <div className="space-y-6">
+              <BackButton onClick={() => setShowCreateFacture(false)} label="Retour aux factures" />
+
+              <h1 className="text-2xl font-display font-bold text-gray-800">Nouvelle facture</h1>
+
+              <Card className="p-6">
+                <h3 className="font-display font-semibold text-gray-800 mb-4">Sélectionner les commandes à facturer</h3>
+
+                {commandesNonFacturees.length === 0 ? (
+                  <p className="text-gray-600 text-center py-8">Aucune commande livrée en attente de facturation</p>
+                ) : (
+                  <div className="space-y-3">
+                    {commandesNonFacturees.map(commande => {
+                      const client = mockData.clients.find(c => c.id === commande.clientId);
+                      return (
+                        <div key={commande.id} className="p-4 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                              <input
+                                type="checkbox"
+                                id={`cmd-${commande.id}`}
+                                className="w-4 h-4 text-black focus:ring-black border-gray-300 rounded"
+                              />
+                              <label htmlFor={`cmd-${commande.id}`} className="flex-1 cursor-pointer">
+                                <p className="font-medium text-gray-800">{commande.numero}</p>
+                                <p className="text-sm text-gray-600">
+                                  {client.entreprise} - Livrée le {commande.livraison}
+                                </p>
+                              </label>
+                            </div>
+                            <p className="font-medium text-gray-800">{commande.montant.toFixed(2)} $</p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                <div className="mt-6 flex justify-end gap-3">
+                  <Button variant="secondary" onClick={() => setShowCreateFacture(false)}>
+                    Annuler
+                  </Button>
+                  <Button disabled={commandesNonFacturees.length === 0}>
+                    Créer la facture
+                  </Button>
+                </div>
+              </Card>
+            </div>
+          );
+        }
+
+        // Liste des factures
+        return (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h1 className="text-2xl font-display font-bold text-gray-800">Facturation</h1>
+              <Button onClick={() => setShowCreateFacture(true)}>
+                Nouvelle facture
+              </Button>
+            </div>
+
+            {/* Cartes de résumé */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <Card className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">Total en attente</p>
+                    <p className="text-2xl font-bold text-gray-800">{totals.enAttente.toFixed(2)} $</p>
+                  </div>
+                  <div className="w-12 h-12 bg-yellow-900/20 rounded-lg flex items-center justify-center">
+                    <span className="text-yellow-400">⏳</span>
+                  </div>
+                </div>
+              </Card>
+
+              <Card className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">En retard</p>
+                    <p className="text-2xl font-bold text-red-400">{totals.enRetard.toFixed(2)} $</p>
+                  </div>
+                  <div className="w-12 h-12 bg-red-900/20 rounded-lg flex items-center justify-center">
+                    <span className="text-red-400">⚠️</span>
+                  </div>
+                </div>
+              </Card>
+
+              <Card className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">Payées ce mois</p>
+                    <p className="text-2xl font-bold text-green-400">{totals.payees.toFixed(2)} $</p>
+                  </div>
+                  <div className="w-12 h-12 bg-green-900/20 rounded-lg flex items-center justify-center">
+                    <span className="text-green-400">✓</span>
+                  </div>
+                </div>
+              </Card>
+
+              <Card className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">Nb factures</p>
+                    <p className="text-2xl font-bold text-gray-800">{factures.length}</p>
+                  </div>
+                  <div className="w-12 h-12 bg-gray-400 rounded-lg flex items-center justify-center">
+                    <span className="text-white">📄</span>
+                  </div>
+                </div>
+              </Card>
+            </div>
+
+            {/* Filtres */}
+            <Card className="p-4">
+              <div className="flex flex-wrap gap-4">
+                <select className="px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-black">
+                  <option value="">Tous les clients</option>
+                  {mockData.clients.map(client => (
+                    <option key={client.id} value={client.id}>{client.entreprise}</option>
+                  ))}
+                </select>
+                <select className="px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-black">
+                  <option value="">Tous les statuts</option>
+                  <option value="En attente">En attente</option>
+                  <option value="Envoyée">Envoyée</option>
+                  <option value="En retard">En retard</option>
+                  <option value="Payée">Payée</option>
+                </select>
+                <input
+                  type="month"
+                  defaultValue="2024-02"
+                  className="px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-black"
+                />
+              </div>
+            </Card>
+
+            {/* Liste des factures */}
+            <Card className="overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-200 border-b border-gray-400">
+                    <tr>
+                      <th className="px-6 py-4 text-left text-sm font-medium text-gray-600">Numéro</th>
+                      <th className="px-6 py-4 text-left text-sm font-medium text-gray-600">Client</th>
+                      <th className="px-6 py-4 text-left text-sm font-medium text-gray-600">Date</th>
+                      <th className="px-6 py-4 text-left text-sm font-medium text-gray-600">Échéance</th>
+                      <th className="px-6 py-4 text-right text-sm font-medium text-gray-600">Montant</th>
+                      <th className="px-6 py-4 text-center text-sm font-medium text-gray-600">Statut</th>
+                      <th className="px-6 py-4 text-center text-sm font-medium text-gray-600">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-700">
+                    {factures.map((facture) => (
+                      <tr key={facture.id} className="hover:bg-gray-100 transition-colors">
+                        <td className="px-6 py-4 text-gray-800 font-medium">{facture.numero}</td>
+                        <td className="px-6 py-4 text-gray-800">{getClientName(facture.clientId)}</td>
+                        <td className="px-6 py-4 text-gray-800">{facture.date}</td>
+                        <td className="px-6 py-4 text-gray-800">{facture.echeance}</td>
+                        <td className="px-6 py-4 text-right text-gray-800 font-medium">
+                          {facture.montantTotal.toFixed(2)} $
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${getStatutColor(facture.statut)}`}>
+                            {facture.statut}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <div className="flex items-center justify-center gap-2">
+                            <button
+                              onClick={() => setSelectedFacture(facture.id)}
+                              className="text-gray-600 hover:text-gray-800 transition-colors"
+                            >
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                              </svg>
+                            </button>
+                            <button className="text-gray-600 hover:text-gray-800 transition-colors">
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                              </svg>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+          </div>
+        );
+      };
+
       // Navigation et menu principal
       const menuItems = [
         { id: 'dashboard', label: 'Tableau de bord', icon: '📊' },
@@ -1812,8 +2253,10 @@
 
                 {activeTab === 'punch' && <Punch />}
 
+                {activeTab === 'factures' && <Facturation />}
+
                 {/* Autres onglets à implémenter */}
-                {['demandes', 'soumissions', 'inventaire', 'factures', 'rapports'].includes(activeTab) && (
+                {['demandes', 'soumissions', 'inventaire', 'rapports'].includes(activeTab) && (
                   <div className="space-y-6">
                     <h1 className="text-2xl font-display font-bold text-gray-800 capitalize">{activeTab}</h1>
                     <Card className="p-8 text-center">
