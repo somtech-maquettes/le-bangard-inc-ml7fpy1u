@@ -521,12 +521,12 @@
         );
       };
 
-      // Composant Button raffiné - thème clair
+      // Composant Button raffiné - thème avec contrastes améliorés
       const Button = ({ children, onClick, variant = "primary", size = "md", className = "" }) => {
         const variants = {
-          primary: "bg-blue-700 text-white hover:bg-blue-800 border-2 border-blue-700",
-          secondary: "bg-gray-100 text-gray-700 hover:bg-gray-200 border-2 border-gray-300",
-          ghost: "text-gray-600 hover:text-gray-900 hover:bg-gray-100 border-2 border-transparent"
+          primary: "bg-blue-600 text-white hover:bg-blue-700 border-2 border-blue-600 shadow-sm",
+          secondary: "bg-white text-gray-800 hover:bg-gray-50 border-2 border-gray-400 shadow-sm",
+          ghost: "text-gray-800 hover:text-gray-900 hover:bg-gray-100 border-2 border-transparent"
         };
 
         const sizes = {
@@ -670,8 +670,8 @@
                     onClick={() => setFilterStatut(statut)}
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                       filterStatut === statut
-                        ? 'bg-gray-900 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        ? 'bg-gray-900 text-white shadow-sm'
+                        : 'bg-white text-gray-800 hover:bg-gray-50 border border-gray-300'
                     }`}
                   >
                     {statut.charAt(0).toUpperCase() + statut.slice(1)}
@@ -701,15 +701,15 @@
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-1">
                           <span className={`px-2 py-1 text-xs font-medium rounded ${
-                            demande.source === 'Email' ? 'bg-blue-100 text-blue-800' :
-                            demande.source === 'Téléphone' ? 'bg-green-100 text-green-800' :
-                            'bg-purple-100 text-purple-800'
+                            demande.source === 'Email' ? 'bg-blue-600 text-white' :
+                            demande.source === 'Téléphone' ? 'bg-green-600 text-white' :
+                            'bg-purple-600 text-white'
                           }`}>
                             {demande.source}
                           </span>
                           <span className={`px-2 py-1 text-xs font-medium rounded ${
-                            demande.priorite === 'Urgente' ? 'bg-red-100 text-red-800' :
-                            'bg-gray-100 text-gray-800'
+                            demande.priorite === 'Urgente' ? 'bg-red-600 text-white' :
+                            'bg-gray-600 text-white'
                           }`}>
                             {demande.priorite}
                           </span>
@@ -720,10 +720,10 @@
                       </div>
                       <div className="flex items-center gap-2 ml-4">
                         <span className={`px-3 py-1 text-xs font-medium rounded-full ${
-                          demande.statut === 'Nouvelle' ? 'bg-blue-100 text-blue-800' :
-                          demande.statut === 'En traitement' ? 'bg-yellow-100 text-yellow-800' :
-                          demande.statut === 'En attente client' ? 'bg-orange-100 text-orange-800' :
-                          'bg-green-100 text-green-800'
+                          demande.statut === 'Nouvelle' ? 'bg-blue-600 text-white' :
+                          demande.statut === 'En traitement' ? 'bg-yellow-600 text-white' :
+                          demande.statut === 'En attente client' ? 'bg-orange-600 text-white' :
+                          'bg-green-600 text-white'
                         }`}>
                           {demande.statut}
                         </span>
@@ -821,13 +821,13 @@
                     </div>
 
                     <div className="flex gap-3 mt-6">
-                      <Button type="submit" className="bg-gray-900 hover:bg-gray-800 text-white">
+                      <Button type="submit" className="bg-gray-900 hover:bg-black text-white shadow-md">
                         Enregistrer la configuration
                       </Button>
                       <Button
                         variant="secondary"
                         onClick={() => setShowClassificationIA(false)}
-                        className="bg-gray-200 hover:bg-gray-300 text-gray-900"
+                        className="bg-white hover:bg-gray-50 text-gray-900 border-2 border-gray-400"
                       >
                         Annuler
                       </Button>
