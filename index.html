@@ -48,6 +48,32 @@
     }
 
     /* Animation scale */
+
+    /* Header spécifique améliorations */
+    header {
+      backdrop-filter: blur(10px);
+      background-color: rgba(255, 255, 255, 0.95);
+      transition: all 0.3s ease;
+    }
+
+    /* Logo hover effect */
+    .logo-glow:hover {
+      filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.5));
+    }
+
+    /* Header text styles */
+    header h1 {
+      letter-spacing: -0.02em;
+      text-rendering: optimizeLegibility;
+    }
+
+    /* Responsive header adjustments */
+    @media (max-width: 640px) {
+      header {
+        padding-top: 0.75rem;
+        padding-bottom: 0.75rem;
+      }
+    }
     @keyframes scale-in {
       from { opacity: 0; transform: scale(0.95); }
       to { opacity: 1; transform: scale(1); }
@@ -2139,33 +2165,48 @@
       return (
         <div className="min-h-screen bg-gray-200">
           {/* Header avec logo */}
-          <header className="bg-gray-100 border-b border-gray-300 shadow-sm relative">
-            <div className="flex items-center justify-between py-2">
-              {/* Logo dans le coin gauche */}
-              <div className="absolute left-2 top-2">
-                <img
-                  src="https://lebangard.com/favicon-192x192.png"
-                  alt="Le Bangard Inc."
-                  className="h-12 w-12"
-                  onError={(e) => { e.target.src = "https://lebangard.com/favicon-180x180.png"; }}
-                />
+          <header className="bg-white border-b border-gray-200 shadow-md relative">
+            <div className="flex items-center justify-between px-6 py-4">
+              {/* Logo et marque */}
+              <div className="flex items-center space-x-3">
+                <div className="relative group">
+                  <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-blue-400 rounded-lg opacity-25 group-hover:opacity-50 transition-opacity duration-300"></div>
+                  <img
+                    src="https://lebangard.com/favicon-192x192.png"
+                    alt="Le Bangard Inc."
+                    className="relative h-14 w-14 rounded-lg shadow-sm transition-transform duration-300 group-hover:scale-105 logo-glow"
+                    onError={(e) => { e.target.src = "https://lebangard.com/favicon-180x180.png"; }}
+                  />
+                </div>
+                <div className="hidden md:block">
+                  <h1 className="text-2xl font-display font-bold text-gray-900 tracking-tight">Le Bangard Inc.</h1>
+                  <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">Excellence en Traiteur</p>
+                </div>
               </div>
 
-              {/* Titre centré */}
-              <div className="flex-1 text-center">
-                <h1 className="text-xl font-display font-bold text-gray-900 mt-1">Le Bangard Inc.</h1>
+              {/* Titre centré pour mobile */}
+              <div className="flex-1 text-center md:hidden">
+                <h1 className="text-xl font-display font-bold text-gray-900">Le Bangard Inc.</h1>
               </div>
 
-              {/* Info à droite */}
-              <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                <span className="text-sm text-gray-600">Gestion Traiteur</span>
+              {/* Info et actions à droite */}
+              <div className="flex items-center space-x-4">
+                <div className="hidden sm:block text-right">
+                  <p className="text-sm font-semibold text-gray-700">Gestion Traiteur</p>
+                  <p className="text-xs text-gray-500">Système de gestion intégré</p>
+                </div>
+                {/* Indicateur de statut */}
+                <div className="hidden lg:flex items-center space-x-2">
+                  <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></div>
+                  <span className="text-xs text-gray-600 font-medium">En ligne</span>
+                </div>
               </div>
             </div>
           </header>
 
           <div className="flex">
             {/* Sidebar */}
-            <aside className="hidden lg:block w-64 bg-gray-100 border-r border-gray-300 min-h-screen shadow-sm">
+            <aside className="hidden lg:block w-64 bg-gray-50 border-r border-gray-200 min-h-screen shadow-sm">
               <nav className="p-4 space-y-1">
                 {menuItems.map((item) => (
                   <button
@@ -2189,7 +2230,7 @@
             </aside>
 
             {/* Navigation mobile */}
-            <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-gray-100 border-t border-gray-300 shadow-lg z-50">
+            <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-50">
               <div className="grid grid-cols-5 gap-1 p-2">
                 {[menuItems[0], menuItems[2], menuItems[4], menuItems[5], menuItems[9]].map((item) => (
                   <button
