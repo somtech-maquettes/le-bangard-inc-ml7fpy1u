@@ -125,11 +125,14 @@
       ],
 
       recettes: [
-        { id: 1, nom: "Sandwich au poulet grillé", rendement: 10, unite: "portions", coutMatiere: 3.25, tempsPrepMinutes: 15, allergenes: ["Gluten", "Moutarde"] },
-        { id: 2, nom: "Salade César maison", rendement: 20, unite: "portions", coutMatiere: 2.15, tempsPrepMinutes: 20, allergenes: ["Œufs", "Poisson", "Lait"] },
-        { id: 3, nom: "Wrap végétarien deluxe", rendement: 15, unite: "unités", coutMatiere: 2.80, tempsPrepMinutes: 25, allergenes: ["Gluten", "Soja"] },
-        { id: 4, nom: "Mousse au chocolat", rendement: 30, unite: "portions", coutMatiere: 1.50, tempsPrepMinutes: 45, allergenes: ["Lait", "Œufs"] },
-        { id: 5, nom: "Soupe du jour", rendement: 5, unite: "litres", coutMatiere: 8.00, tempsPrepMinutes: 60, allergenes: ["Variable"] }
+        { id: 1, nom: "Sandwich au poulet grillé", rendement: 10, unite: "portions", coutMatiere: 3.25, tempsPrepMinutes: 15, allergenes: ["Gluten", "Moutarde"], categorie: "Sandwichs" },
+        { id: 2, nom: "Salade César maison", rendement: 20, unite: "portions", coutMatiere: 2.15, tempsPrepMinutes: 20, allergenes: ["Œufs", "Poisson", "Lait"], categorie: "Salades" },
+        { id: 3, nom: "Wrap végétarien deluxe", rendement: 15, unite: "unités", coutMatiere: 2.80, tempsPrepMinutes: 25, allergenes: ["Gluten", "Soja"], categorie: "Wraps" },
+        { id: 4, nom: "Mousse au chocolat", rendement: 30, unite: "portions", coutMatiere: 1.50, tempsPrepMinutes: 45, allergenes: ["Lait", "Œufs"], categorie: "Desserts" },
+        { id: 5, nom: "Soupe du jour", rendement: 5, unite: "litres", coutMatiere: 8.00, tempsPrepMinutes: 60, allergenes: ["Variable"], categorie: "Soupes" },
+        { id: 6, nom: "Plateau de crudités", rendement: 25, unite: "portions", coutMatiere: 1.20, tempsPrepMinutes: 30, allergenes: [], categorie: "Plateaux" },
+        { id: 7, nom: "Quiche lorraine", rendement: 8, unite: "portions", coutMatiere: 2.75, tempsPrepMinutes: 90, allergenes: ["Gluten", "Œufs", "Lait"], categorie: "Plats chauds" },
+        { id: 8, nom: "Brochettes de poulet satay", rendement: 40, unite: "unités", coutMatiere: 1.95, tempsPrepMinutes: 45, allergenes: ["Arachides", "Soja"], categorie: "Bouchées" }
       ],
 
       inventaire: [
@@ -173,6 +176,7 @@
       });
 
       const [showModal, setShowModal] = React.useState(false);
+      const [modalType, setModalType] = React.useState('');
       const [searchTerm, setSearchTerm] = React.useState('');
 
       // Navigation 5 niveaux
@@ -378,7 +382,7 @@
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black/50 focus:border-transparent"
                 />
-                <Button onClick={() => setShowModal(true)}>
+                <Button onClick={() => { setModalType('client'); setShowModal(true); }}>
                   Nouveau client
                 </Button>
               </div>
@@ -819,6 +823,482 @@
         );
       };
 
+      // Composant Liste des Recettes
+      const RecetteList = ({ onSelect }) => {
+        const filteredRecettes = mockData.recettes.filter(recette =>
+          recette.nom.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+
+        return (
+          <div className="space-y-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <h1 className="text-2xl font-display font-bold text-gray-100">Recettes</h1>
+              <div className="flex gap-3">
+                <input
+                  type="text"
+                  placeholder="Rechercher..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black/50 focus:border-transparent"
+                />
+                <Button onClick={() => { setModalType('recette'); setShowModal(true); }}>
+                  Nouvelle recette
+                </Button>
+              </div>
+            </div>
+
+            <Card className="overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-900/50 border-b border-gray-700">
+                    <tr>
+                      <th className="px-6 py-4 text-left text-sm font-display font-medium text-gray-400">Nom</th>
+                      <th className="px-6 py-4 text-left text-sm font-display font-medium text-gray-400">Rendement</th>
+                      <th className="px-6 py-4 text-left text-sm font-display font-medium text-gray-400">Coût matière</th>
+                      <th className="px-6 py-4 text-left text-sm font-display font-medium text-gray-400">Temps préparation</th>
+                      <th className="px-6 py-4 text-left text-sm font-display font-medium text-gray-400">Allergènes</th>
+                      <th className="px-6 py-4 text-right text-sm font-display font-medium text-gray-400">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-700">
+                    {filteredRecettes.map((recette, i) => (
+                      <tr
+                        key={recette.id}
+                        onClick={() => onSelect(recette.id)}
+                        className="hover:bg-gray-800/50 cursor-pointer transition-colors animate-fade-in-up"
+                        style={{ animationDelay: `${i * 50}ms` }}
+                      >
+                        <td className="px-6 py-4 text-gray-100 font-body">{recette.nom}</td>
+                        <td className="px-6 py-4 text-gray-100">{recette.rendement} {recette.unite}</td>
+                        <td className="px-6 py-4">
+                          <span className="font-semibold text-gray-100">{recette.coutMatiere.toFixed(2)} $</span>
+                        </td>
+                        <td className="px-6 py-4 text-gray-100">{recette.tempsPrepMinutes} min</td>
+                        <td className="px-6 py-4">
+                          {recette.allergenes.length > 0 ? (
+                            <div className="flex flex-wrap gap-1">
+                              {recette.allergenes.slice(0, 3).map((allergene, idx) => (
+                                <span key={idx} className="inline-block px-2 py-0.5 text-xs bg-orange-900/50 text-orange-300 rounded">
+                                  {allergene}
+                                </span>
+                              ))}
+                              {recette.allergenes.length > 3 && (
+                                <span className="text-xs text-gray-500">+{recette.allergenes.length - 3}</span>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-gray-500 text-sm">Aucun</span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); goToEdit('recette', recette.id); }}
+                            className="text-gray-400 hover:text-gray-100 transition-colors"
+                          >
+                            Modifier
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+          </div>
+        );
+      };
+
+      // Composant Détail Recette
+      const RecetteDetail = ({ recetteId, onBack }) => {
+        const recette = mockData.recettes.find(r => r.id === recetteId);
+        if (!recette) return <div>Recette non trouvée</div>;
+
+        // Simulated ingredients for the recipe
+        const ingredients = [
+          { nom: "Poulet grillé", quantite: 2, unite: "kg", cout: 24.00 },
+          { nom: "Pain", quantite: 20, unite: "tranches", cout: 3.50 },
+          { nom: "Laitue", quantite: 1, unite: "kg", cout: 4.00 },
+          { nom: "Tomates", quantite: 0.5, unite: "kg", cout: 2.00 },
+          { nom: "Mayonnaise", quantite: 250, unite: "ml", cout: 1.50 },
+        ];
+
+        const coutTotal = ingredients.reduce((sum, ing) => sum + ing.cout, 0);
+        const coutParPortion = coutTotal / recette.rendement;
+
+        return (
+          <div className="space-y-6">
+            <BackButton onClick={onBack} label="Retour aux recettes" />
+
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-display font-bold text-gray-100">{recette.nom}</h1>
+                <p className="text-lg text-gray-400">Rendement: {recette.rendement} {recette.unite}</p>
+              </div>
+              <div className="flex gap-3">
+                <Button variant="secondary" onClick={() => goToEdit('recette', recetteId)}>Modifier</Button>
+                <Button>Imprimer</Button>
+                <Button variant="ghost">Supprimer</Button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <Card className="p-6">
+                <h3 className="font-display font-semibold text-gray-100 mb-4">Coûts</h3>
+                <dl className="space-y-3">
+                  <div>
+                    <dt className="text-sm text-gray-400 font-body">Coût matière total</dt>
+                    <dd className="text-2xl font-bold text-gray-100">{coutTotal.toFixed(2)} $</dd>
+                  </div>
+                  <div>
+                    <dt className="text-sm text-gray-400 font-body">Coût par portion</dt>
+                    <dd className="text-xl font-semibold text-gray-100">{coutParPortion.toFixed(2)} $</dd>
+                  </div>
+                </dl>
+              </Card>
+
+              <Card className="p-6">
+                <h3 className="font-display font-semibold text-gray-100 mb-4">Temps</h3>
+                <dl className="space-y-3">
+                  <div>
+                    <dt className="text-sm text-gray-400 font-body">Temps de préparation</dt>
+                    <dd className="text-2xl font-bold text-gray-100">{recette.tempsPrepMinutes} min</dd>
+                  </div>
+                  <div>
+                    <dt className="text-sm text-gray-400 font-body">Temps par portion</dt>
+                    <dd className="text-xl font-semibold text-gray-100">
+                      {(recette.tempsPrepMinutes / recette.rendement).toFixed(1)} min
+                    </dd>
+                  </div>
+                </dl>
+              </Card>
+
+              <Card className="p-6">
+                <h3 className="font-display font-semibold text-gray-100 mb-4">Allergènes</h3>
+                {recette.allergenes.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {recette.allergenes.map((allergene, idx) => (
+                      <span key={idx} className="inline-block px-3 py-1 bg-orange-900/50 text-orange-300 rounded-lg">
+                        {allergene}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-500">Aucun allergène déclaré</p>
+                )}
+              </Card>
+            </div>
+
+            {/* Section des ingrédients */}
+            <Card className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-display font-semibold text-gray-100">Ingrédients</h3>
+                <Button size="sm" onClick={() => goToSubList('recette', recetteId, 'ingredients')}>
+                  Gérer les ingrédients
+                </Button>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="border-b border-gray-700">
+                    <tr>
+                      <th className="pb-3 text-left text-sm font-medium text-gray-400">Ingrédient</th>
+                      <th className="pb-3 text-left text-sm font-medium text-gray-400">Quantité</th>
+                      <th className="pb-3 text-right text-sm font-medium text-gray-400">Coût</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-700">
+                    {ingredients.map((ing, idx) => (
+                      <tr key={idx} className="group">
+                        <td className="py-3 text-gray-100">{ing.nom}</td>
+                        <td className="py-3 text-gray-100">{ing.quantite} {ing.unite}</td>
+                        <td className="py-3 text-right font-semibold text-gray-100">{ing.cout.toFixed(2)} $</td>
+                      </tr>
+                    ))}
+                    <tr className="border-t-2 border-gray-600">
+                      <td colSpan={2} className="pt-3 text-right font-semibold text-gray-100">Total:</td>
+                      <td className="pt-3 text-right font-bold text-xl text-gray-100">{coutTotal.toFixed(2)} $</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+
+            {/* Section des étapes de préparation */}
+            <Card className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-display font-semibold text-gray-100">Étapes de préparation</h3>
+                <Button size="sm" onClick={() => goToSubList('recette', recetteId, 'etapes')}>
+                  Gérer les étapes
+                </Button>
+              </div>
+
+              <ol className="space-y-3">
+                <li className="flex gap-3">
+                  <span className="flex-shrink-0 w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center text-sm font-bold text-gray-300">1</span>
+                  <p className="text-gray-100 pt-1">Griller le poulet à 180°C pendant 20 minutes jusqu'à ce qu'il soit bien doré.</p>
+                </li>
+                <li className="flex gap-3">
+                  <span className="flex-shrink-0 w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center text-sm font-bold text-gray-300">2</span>
+                  <p className="text-gray-100 pt-1">Laisser refroidir et couper en tranches fines.</p>
+                </li>
+                <li className="flex gap-3">
+                  <span className="flex-shrink-0 w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center text-sm font-bold text-gray-300">3</span>
+                  <p className="text-gray-100 pt-1">Préparer les légumes : laver la laitue, trancher les tomates.</p>
+                </li>
+                <li className="flex gap-3">
+                  <span className="flex-shrink-0 w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center text-sm font-bold text-gray-300">4</span>
+                  <p className="text-gray-100 pt-1">Assembler les sandwichs en étalant la mayonnaise, puis en ajoutant le poulet et les légumes.</p>
+                </li>
+              </ol>
+            </Card>
+          </div>
+        );
+      };
+
+      // Composant Édition Recette
+      const RecetteEdit = ({ recetteId, onBack }) => {
+        const recette = mockData.recettes.find(r => r.id === recetteId);
+        const [formData, setFormData] = React.useState({
+          nom: recette?.nom || '',
+          rendement: recette?.rendement || '',
+          unite: recette?.unite || '',
+          tempsPrepMinutes: recette?.tempsPrepMinutes || '',
+          allergenes: recette?.allergenes.join(', ') || ''
+        });
+
+        return (
+          <div className="space-y-6">
+            <BackButton onClick={onBack} label="Retour au détail" />
+
+            <h1 className="text-2xl font-display font-bold text-gray-100">
+              {recetteId ? `Modifier ${recette?.nom}` : 'Nouvelle recette'}
+            </h1>
+
+            <Card className="p-6">
+              <form className="space-y-6" onSubmit={(e) => {
+                e.preventDefault();
+                // Sauvegarder et retourner
+                onBack();
+              }}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Nom de la recette
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.nom}
+                      onChange={(e) => setFormData({...formData, nom: e.target.value})}
+                      className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-100 focus:outline-none focus:ring-2 focus:ring-black/50"
+                      placeholder="Ex: Sandwich au poulet grillé"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Rendement
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.rendement}
+                      onChange={(e) => setFormData({...formData, rendement: e.target.value})}
+                      className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-100 focus:outline-none focus:ring-2 focus:ring-black/50"
+                      placeholder="10"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Unité
+                    </label>
+                    <select
+                      value={formData.unite}
+                      onChange={(e) => setFormData({...formData, unite: e.target.value})}
+                      className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-100 focus:outline-none focus:ring-2 focus:ring-black/50"
+                    >
+                      <option value="portions">portions</option>
+                      <option value="unités">unités</option>
+                      <option value="litres">litres</option>
+                      <option value="kg">kg</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Temps de préparation (minutes)
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.tempsPrepMinutes}
+                      onChange={(e) => setFormData({...formData, tempsPrepMinutes: e.target.value})}
+                      className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-100 focus:outline-none focus:ring-2 focus:ring-black/50"
+                      placeholder="30"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Allergènes (séparés par des virgules)
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.allergenes}
+                      onChange={(e) => setFormData({...formData, allergenes: e.target.value})}
+                      className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-100 focus:outline-none focus:ring-2 focus:ring-black/50"
+                      placeholder="Gluten, Œufs, Lait"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex gap-3 pt-4 border-t border-gray-700">
+                  <Button type="submit">Enregistrer</Button>
+                  <Button type="button" variant="secondary" onClick={onBack}>Annuler</Button>
+                </div>
+              </form>
+            </Card>
+          </div>
+        );
+      };
+
+      // Composant Liste des Ingrédients d'une recette
+      const IngredientsList = ({ recetteId, onBack }) => {
+        const recette = mockData.recettes.find(r => r.id === recetteId);
+        const [ingredients, setIngredients] = React.useState([
+          { id: 1, nom: "Poulet grillé", quantite: 2, unite: "kg", cout: 24.00 },
+          { id: 2, nom: "Pain", quantite: 20, unite: "tranches", cout: 3.50 },
+          { id: 3, nom: "Laitue", quantite: 1, unite: "kg", cout: 4.00 },
+          { id: 4, nom: "Tomates", quantite: 0.5, unite: "kg", cout: 2.00 },
+          { id: 5, nom: "Mayonnaise", quantite: 250, unite: "ml", cout: 1.50 },
+        ]);
+
+        const coutTotal = ingredients.reduce((sum, ing) => sum + ing.cout, 0);
+
+        return (
+          <div className="space-y-6">
+            <BackButton onClick={onBack} label={`Retour à ${recette?.nom}`} />
+
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl font-display font-bold text-gray-100">Ingrédients</h1>
+                <p className="text-gray-400">{recette?.nom}</p>
+              </div>
+              <Button>Ajouter un ingrédient</Button>
+            </div>
+
+            <Card className="overflow-hidden">
+              <div className="p-4 border-b border-gray-700 bg-gray-900/50">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-gray-400">Coût total des ingrédients</span>
+                  <span className="text-xl font-bold text-gray-100">{coutTotal.toFixed(2)} $</span>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-900/30 border-b border-gray-700">
+                    <tr>
+                      <th className="px-6 py-4 text-left text-sm font-medium text-gray-400">Ingrédient</th>
+                      <th className="px-6 py-4 text-left text-sm font-medium text-gray-400">Quantité</th>
+                      <th className="px-6 py-4 text-left text-sm font-medium text-gray-400">Coût unitaire</th>
+                      <th className="px-6 py-4 text-right text-sm font-medium text-gray-400">Coût total</th>
+                      <th className="px-6 py-4 text-right text-sm font-medium text-gray-400">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-700">
+                    {ingredients.map((ing) => (
+                      <tr key={ing.id} className="hover:bg-gray-800/50 transition-colors">
+                        <td className="px-6 py-4 text-gray-100">{ing.nom}</td>
+                        <td className="px-6 py-4 text-gray-100">{ing.quantite} {ing.unite}</td>
+                        <td className="px-6 py-4 text-gray-100">{(ing.cout / ing.quantite).toFixed(2)} $</td>
+                        <td className="px-6 py-4 text-right font-semibold text-gray-100">{ing.cout.toFixed(2)} $</td>
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <button className="text-gray-400 hover:text-gray-100 transition-colors">
+                              Modifier
+                            </button>
+                            <button className="text-red-400 hover:text-red-300 transition-colors">
+                              Retirer
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+          </div>
+        );
+      };
+
+      // Composant Liste des Étapes d'une recette
+      const EtapesList = ({ recetteId, onBack }) => {
+        const recette = mockData.recettes.find(r => r.id === recetteId);
+        const [etapes, setEtapes] = React.useState([
+          { id: 1, ordre: 1, description: "Griller le poulet à 180°C pendant 20 minutes jusqu'à ce qu'il soit bien doré.", duree: 20 },
+          { id: 2, ordre: 2, description: "Laisser refroidir et couper en tranches fines.", duree: 5 },
+          { id: 3, ordre: 3, description: "Préparer les légumes : laver la laitue, trancher les tomates.", duree: 10 },
+          { id: 4, ordre: 4, description: "Assembler les sandwichs en étalant la mayonnaise, puis en ajoutant le poulet et les légumes.", duree: 15 }
+        ]);
+
+        const dureeTotal = etapes.reduce((sum, etape) => sum + etape.duree, 0);
+
+        return (
+          <div className="space-y-6">
+            <BackButton onClick={onBack} label={`Retour à ${recette?.nom}`} />
+
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl font-display font-bold text-gray-100">Étapes de préparation</h1>
+                <p className="text-gray-400">{recette?.nom}</p>
+              </div>
+              <Button>Ajouter une étape</Button>
+            </div>
+
+            <Card className="p-6">
+              <div className="mb-4 p-4 bg-gray-900/50 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-gray-400">Durée totale de préparation</span>
+                  <span className="text-xl font-bold text-gray-100">{dureeTotal} minutes</span>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                {etapes.map((etape) => (
+                  <div key={etape.id} className="flex gap-4 p-4 bg-gray-800/50 rounded-lg hover:bg-gray-800 transition-colors">
+                    <div className="flex-shrink-0">
+                      <div className="w-10 h-10 bg-black rounded-full flex items-center justify-center">
+                        <span className="font-bold text-white">{etape.ordre}</span>
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-gray-100">{etape.description}</p>
+                      <p className="text-sm text-gray-400 mt-1">Durée: {etape.duree} min</p>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <button className="text-gray-400 hover:text-gray-100 transition-colors">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </button>
+                      <button className="text-red-400 hover:text-red-300 transition-colors">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-6 flex justify-end">
+                <Button variant="secondary">Réorganiser les étapes</Button>
+              </div>
+            </Card>
+          </div>
+        );
+      };
+
       // Navigation et menu principal
       const menuItems = [
         { id: 'dashboard', label: 'Tableau de bord', icon: '📊' },
@@ -826,6 +1306,7 @@
         { id: 'clients', label: 'Clients', icon: '👥' },
         { id: 'soumissions', label: 'Soumissions', icon: '💼' },
         { id: 'production', label: 'Production', icon: '👨‍🍳' },
+        { id: 'recettes', label: 'Recettes', icon: '📝' },
         { id: 'inventaire', label: 'Inventaire', icon: '📦' },
         { id: 'factures', label: 'Facturation', icon: '💰' },
         { id: 'rapports', label: 'Rapports', icon: '📈' }
@@ -860,7 +1341,11 @@
                 {menuItems.map((item) => (
                   <button
                     key={item.id}
-                    onClick={() => { setActiveTab(item.id); goToList(item.id); }}
+                    onClick={() => {
+                      setActiveTab(item.id);
+                      setView({ screen: 'list', entityType: null, entityId: null, subEntityType: null, subEntityId: null });
+                      setSearchTerm('');
+                    }}
                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 font-body ${
                       activeTab === item.id
                         ? 'bg-black text-white shadow-lg'
@@ -876,11 +1361,15 @@
 
             {/* Navigation mobile */}
             <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-gray-800 border-t border-gray-700 z-50">
-              <div className="grid grid-cols-4 gap-1 p-2">
-                {menuItems.slice(0, 4).map((item) => (
+              <div className="grid grid-cols-5 gap-1 p-2">
+                {menuItems.slice(0, 5).map((item) => (
                   <button
                     key={item.id}
-                    onClick={() => { setActiveTab(item.id); goToList(item.id); }}
+                    onClick={() => {
+                      setActiveTab(item.id);
+                      setView({ screen: 'list', entityType: null, entityId: null, subEntityType: null, subEntityId: null });
+                      setSearchTerm('');
+                    }}
                     className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-colors ${
                       activeTab === item.id
                         ? 'bg-black text-white'
@@ -935,6 +1424,38 @@
 
                 {activeTab === 'production' && <Production />}
 
+                {activeTab === 'recettes' && (
+                  <>
+                    {view.screen === 'list' && (
+                      <RecetteList onSelect={(id) => goToDetail('recette', id)} />
+                    )}
+                    {view.screen === 'detail' && view.entityType === 'recette' && (
+                      <RecetteDetail
+                        recetteId={view.entityId}
+                        onBack={() => goToList('recette')}
+                      />
+                    )}
+                    {view.screen === 'edit' && view.entityType === 'recette' && (
+                      <RecetteEdit
+                        recetteId={view.entityId}
+                        onBack={() => view.entityId ? goToDetail('recette', view.entityId) : goToList('recette')}
+                      />
+                    )}
+                    {view.screen === 'sublist' && view.subEntityType === 'ingredients' && (
+                      <IngredientsList
+                        recetteId={view.entityId}
+                        onBack={() => goToDetail('recette', view.entityId)}
+                      />
+                    )}
+                    {view.screen === 'sublist' && view.subEntityType === 'etapes' && (
+                      <EtapesList
+                        recetteId={view.entityId}
+                        onBack={() => goToDetail('recette', view.entityId)}
+                      />
+                    )}
+                  </>
+                )}
+
                 {/* Autres onglets à implémenter */}
                 {['demandes', 'soumissions', 'inventaire', 'factures', 'rapports'].includes(activeTab) && (
                   <div className="space-y-6">
@@ -953,24 +1474,74 @@
             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
               <Card className="w-full max-w-md animate-scale-in">
                 <div className="p-6">
-                  <h2 className="text-xl font-display font-semibold text-gray-100 mb-4">Nouveau client</h2>
+                  <h2 className="text-xl font-display font-semibold text-gray-100 mb-4">
+                    {modalType === 'recette' ? 'Nouvelle recette' : 'Nouveau client'}
+                  </h2>
                   <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); setShowModal(false); }}>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-1">Nom</label>
-                      <input
-                        type="text"
-                        className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-100 focus:outline-none focus:ring-2 focus:ring-black/50"
-                        placeholder="Jean Tremblay"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-1">Entreprise</label>
-                      <input
-                        type="text"
-                        className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-100 focus:outline-none focus:ring-2 focus:ring-black/50"
-                        placeholder="Restaurant ABC"
-                      />
-                    </div>
+                    {modalType === 'client' ? (
+                      <>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-300 mb-1">Nom</label>
+                          <input
+                            type="text"
+                            className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-100 focus:outline-none focus:ring-2 focus:ring-black/50"
+                            placeholder="Jean Tremblay"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-300 mb-1">Entreprise</label>
+                          <input
+                            type="text"
+                            className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-100 focus:outline-none focus:ring-2 focus:ring-black/50"
+                            placeholder="Restaurant ABC"
+                          />
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-300 mb-1">Nom de la recette</label>
+                          <input
+                            type="text"
+                            className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-100 focus:outline-none focus:ring-2 focus:ring-black/50"
+                            placeholder="Ex: Plateau de sandwichs variés"
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-300 mb-1">Rendement</label>
+                            <input
+                              type="number"
+                              className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-100 focus:outline-none focus:ring-2 focus:ring-black/50"
+                              placeholder="10"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-300 mb-1">Unité</label>
+                            <select className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-100 focus:outline-none focus:ring-2 focus:ring-black/50">
+                              <option value="portions">portions</option>
+                              <option value="unités">unités</option>
+                              <option value="litres">litres</option>
+                              <option value="kg">kg</option>
+                            </select>
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-300 mb-1">Catégorie</label>
+                          <select className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-100 focus:outline-none focus:ring-2 focus:ring-black/50">
+                            <option value="">Sélectionner une catégorie</option>
+                            <option value="Sandwichs">Sandwichs</option>
+                            <option value="Salades">Salades</option>
+                            <option value="Wraps">Wraps</option>
+                            <option value="Plateaux">Plateaux</option>
+                            <option value="Soupes">Soupes</option>
+                            <option value="Desserts">Desserts</option>
+                            <option value="Plats chauds">Plats chauds</option>
+                            <option value="Bouchées">Bouchées</option>
+                          </select>
+                        </div>
+                      </>
+                    )}
                     <div className="flex gap-3 pt-4">
                       <Button type="submit">Créer</Button>
                       <Button type="button" variant="secondary" onClick={() => setShowModal(false)}>
