@@ -3256,8 +3256,10 @@
 
                 {activeTab === 'factures' && <Facturation />}
 
+                {activeTab === 'inventaire' && <Inventaire />}
+
                 {/* Autres onglets à implémenter */}
-                {['demandes', 'soumissions', 'inventaire', 'rapports'].includes(activeTab) && (
+                {['demandes', 'soumissions', 'rapports'].includes(activeTab) && (
                   <div className="space-y-6">
                     <h1 className="text-2xl font-display font-bold text-gray-800 capitalize">{activeTab}</h1>
                     <Card className="p-8 text-center">
